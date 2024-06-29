@@ -1,0 +1,54 @@
+http:
+  use_x_forwarded_for: true
+  trusted_proxies: !secret http_trusted_proxies
+
+my:
+mobile_app:
+energy:
+
+lovelace:
+  mode: yaml
+
+homeassistant:
+  whitelist_external_dirs:
+    - /config
+  customize:
+    device_tracker.ford_fiesta:
+      entity_picture: /local/ford-fiesta.jpg
+
+pyscript:
+  allow_all_imports: true
+  hass_is_global: true
+
+recorder:
+  purge_keep_days: 3
+  exclude:
+    entities:
+      - sensor.icloud3_event_log
+
+logger:
+  default: info
+  logs:
+    custom_components.pyscript: debug
+
+input_boolean: !include input_boolean.yaml
+input_datetime: !include input_datetime.yaml
+input_select: !include input_select.yaml
+frontend:
+  themes: !include_dir_merge_named themes
+group: !include groups.yaml
+notify: !include notify.yaml
+automation: !include_dir_merge_list automations/
+script: !include scripts.yaml
+scene: !include scenes.yaml
+sensor: !include_dir_merge_list sensors/
+template: !include_dir_merge_list template_sensors/
+calendar: !include calendar.yaml
+utility_meter: !include utility_meter.yaml
+mqtt: !include_dir_merge_list mqtt/
+homekit: !include homekit.yaml
+
+telegram_bot:
+  - platform: polling
+    api_key: !secret telegram_scream_bot
+    allowed_chat_ids: !secret telegram_scream_bot_chat_id_steven
