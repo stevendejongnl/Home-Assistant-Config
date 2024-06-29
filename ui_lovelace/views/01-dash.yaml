@@ -1,0 +1,160 @@
+- title: Dash
+  path: dash
+  icon: mdi:view-dashboard
+  badges: []
+  cards:
+    - type: entities
+      entities:
+        - entity: sensor.uptime
+        - entity: sensor.hacs
+        - entity: sensor.memory_free
+        - entity: sensor.freezer_power_average
+
+    - type: "custom:uptime-card"
+      entity: sun.sun
+      title_template: Sun
+      icon: "mdi:weather-sunny"
+      ko_icon: "mdi:weather-sunny-off"
+      ko: below_horizon
+      icon_adaptive_color: true
+      title_adaptive_color: true
+      color:
+        ok: "#F9d71C"
+        ko: "#053752"
+        half: "#EF810E"
+      bar:
+        spacing: 4
+        height: 10
+        round: 4
+      show:
+        average: false
+        status: false
+      alignment:
+        status: spaced
+        header: left
+        icon_first: true
+      tap_action:
+        action: more-info
+
+    - type: custom:vacuum-card
+      entity: vacuum.flip
+      image: default
+      compact_view: false
+      shortcuts:
+        - name: Dock
+          service: script.flip_dock
+          icon: mdi:home-map-marker
+        - name: Edge Cleaning
+          service: script.flip_edgeclean
+          icon: mdi:square-outline
+        - name: Small Room
+          service: script.flip_smallroomclean
+          icon: mdi:timer-cog-outline
+
+    - show_name: true
+      show_icon: false
+      type: custom:button-card
+      name: Start Flip in 1h
+      tap_action:
+        action: call-service
+        service: automation.trigger
+        service_data:
+          entity_id: automation.start_flip_delayed
+      entity: input_boolean.start_flip_delayed
+      show_state: true
+
+    - type: map
+      entities:
+        - device_tracker.steven
+        - device_tracker.anja
+        - device_tracker.ford_fiesta
+      dark_mode: false
+
+    - cards:
+        - cards:
+            - entity: sensor.washing_machine_on_time_complete
+              name: Washing Machine
+              icon: mdi:washing-machine
+              scale: 20px
+              tap_action: none
+              type: custom:button-card
+
+            - entity: sensor.dryer_on_time_complete
+              name: Dryer
+              icon: mdi:tumble-dryer
+              scale: 20px
+              tap_action: none
+              type: custom:button-card
+
+            - entity: sensor.dishwasher_on_time_complete
+              name: Dishwasher
+              icon: mdi:dishwasher
+              scale: 20px
+              tap_action: none
+              type: custom:button-card
+          type: horizontal-stack
+
+        - cards:
+            - entity: sensor.washing_machine_on_time_complete
+              scale: 20px
+              style:
+                - text-transform: capitalize
+              type: custom:bignumber-card
+
+            - entity: sensor.dryer_on_time_complete
+              scale: 20px
+              style:
+                - text-transform: capitalize
+              type: custom:bignumber-card
+
+            - entity: sensor.dishwasher_on_time_complete
+              scale: 20px
+              style:
+                - text-transform: capitalize
+              type: custom:bignumber-card
+          type: horizontal-stack
+      type: vertical-stack
+
+    - type: gauge
+      entity: sensor.pm25_starkvind
+      min: 0
+      max: 100
+      severity:
+        green: 0
+        yellow: 30
+        red: 60
+      needle: true
+    - type: gauge
+      entity: sensor.pm25_vindstyrka
+      min: 0
+      max: 100
+      severity:
+        green: 0
+        yellow: 30
+        red: 60
+      needle: true
+    - type: custom:mushroom-humidifier-card
+      entity: sensor.vindstyrka_humidity
+    - type: custom:mushroom-fan-card
+      entity: fan.starkvind
+    - type: custom:air-visual-card
+      air_pollution_level: sensor.u_s_air_pollution_level
+      air_quality_index: sensor.u_s_air_quality_index
+      main_pollutant: sensor.u_s_main_pollutant
+      weather: weather.home
+      hide_weather: 1
+      hide_title: 1
+      unit_of_measurement: AQI
+      hide_face: 0
+    - type: entities
+      entities:
+        - sensor.starkvind_air_quality
+        - sensor.starkvind_pm25
+        - sensor.starkvind_filter_age
+        - binary_sensor.starkvind_replace_filter
+        - sensor.vindstyrka_humidity
+        - sensor.vindstyrka_pm25
+        - sensor.vindstyrka_temperature
+        - sensor.vindstyrka_voc_index
+        - sensor.toothbrush_anja_battery
+        - sensor.toothbrush_steven_battery

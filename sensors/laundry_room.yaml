@@ -1,0 +1,31 @@
+- platform: template
+  sensors:
+    dryer_on_time:
+      value_template: >
+        {{ (as_timestamp(now())
+            - state_attr('input_datetime.dryer_start', 'timestamp'))
+           |timestamp_custom('%H:%M:%S', false) }}
+
+    dryer_on_time_complete:
+      friendly_name: Dryer on Timer
+      value_template: >
+          {% if is_state('input_select.dryer_status', 'Running') %}
+            {{ states('sensor.dryer_on_time') }}
+          {% else %}
+            {{ states.input_select.dryer_status.state }}
+          {% endif %}
+
+    washing_machine_on_time:
+      value_template: >
+        {{ (as_timestamp(now())
+            - state_attr('input_datetime.washing_machine_start', 'timestamp'))
+           |timestamp_custom('%H:%M:%S', false) }}
+
+    washing_machine_on_time_complete:
+      friendly_name: Washing Machine on Timer
+      value_template: >
+          {% if is_state('input_select.washing_machine_status', 'Running') %}
+            {{ states('sensor.washing_machine_on_time') }}
+          {% else %}
+            {{ states.input_select.washing_machine_status.state }}
+          {% endif %}

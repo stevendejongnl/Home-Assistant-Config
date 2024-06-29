@@ -1,0 +1,210 @@
+- title: Energy
+  path: energy
+  icon: mdi:home-lightning-bolt-outline
+  badges: []
+  cards:
+    - type: entities
+      entities:
+        - entity: switch.tv
+          name: TV Switch
+
+        - entity: switch.washing_machine
+          name: Waching Machine Switch
+
+        - entity: switch.dishwasher
+          name: Dishwasher Switch
+
+        - entity: switch.dryer
+          name: Dryer Switch
+
+    - entities:
+        - entity: sensor.tv_power
+          name: Current Power
+        - entity: sensor.tv_energy
+          name: Total Power
+          color: gray
+          y_axis: secondary
+      hours_to_show: 6
+      color_thresholds:
+        - value: 50
+          color: green
+        - value: 100
+          color: orange
+        - value: 150
+          color: red
+      line_width: 3
+      show:
+        labels: true
+        legend: false
+        labels_secondary: true
+      icon: mdi:television
+      name: TV Power Consumption
+      type: custom:mini-graph-card
+
+    - entities:
+        - entity: sensor.washing_machine_power
+          name: Current Power
+        - entity: sensor.washing_machine_energy
+          name: Total Power
+          color: gray
+          y_axis: secondary
+      hours_to_show: 6
+      color_thresholds:
+        - value: 50
+          color: green
+        - value: 100
+          color: orange
+        - value: 150
+          color: red
+      line_width: 3
+      show:
+        labels: true
+        legend: false
+        labels_secondary: true
+      icon: mdi:washing-machine
+      name: Washing Maching Power Consumption
+      type: custom:mini-graph-card
+
+    - entities:
+        - entity: sensor.dryer_power
+          name: Current Power
+        - entity: sensor.dryer_energy
+          name: Total Power
+          color: gray
+          y_axis: secondary
+      hours_to_show: 6
+      color_thresholds:
+        - value: 50
+          color: green
+        - value: 100
+          color: orange
+        - value: 150
+          color: red
+      line_width: 3
+      show:
+        labels: true
+        legend: false
+        labels_secondary: true
+      icon: mdi:tumble-dryer
+      name: Dryer Power Consumption
+      type: custom:mini-graph-card
+
+    - entities:
+        - entity: sensor.dishwasher_power
+          name: Current Power
+        - entity: sensor.dishwasher_energy
+          name: Total Power
+          color: gray
+          y_axis: secondary
+      hours_to_show: 6
+      color_thresholds:
+        - value: 50
+          color: green
+        - value: 100
+          color: orange
+        - value: 150
+          color: red
+      line_width: 3
+      show:
+        labels: true
+        legend: false
+        labels_secondary: true
+      icon: mdi:dishwasher
+      name: Dishwasher Power Consumption
+      type: custom:mini-graph-card
+
+    - entities:
+        - entity: sensor.desk_power
+          name: Current Power
+        - entity: sensor.desk_energy
+          name: Total Power
+          color: gray
+          y_axis: secondary
+      hours_to_show: 6
+      color_thresholds:
+        - value: 50
+          color: green
+        - value: 100
+          color: orange
+        - value: 150
+          color: red
+      line_width: 3
+      show:
+        labels: true
+        legend: false
+        labels_secondary: true
+      icon: mdi:desk
+      name: Desk Power Consumption
+      type: custom:mini-graph-card
+
+    - entities:
+        - entity: sensor.3dprinter_power
+          name: Current Power
+        - entity: sensor.3d_printer_energy
+          name: Total Power
+          color: gray
+          y_axis: secondary
+      hours_to_show: 6
+      color_thresholds:
+        - value: 50
+          color: green
+        - value: 100
+          color: orange
+        - value: 150
+          color: red
+      line_width: 3
+      show:
+        labels: true
+        legend: false
+        labels_secondary: true
+      icon: mdi:printer-3d
+      name: 3D Printer Power Consumption
+      type: custom:mini-graph-card
+
+    - entities:
+        - entity: sensor.freezer_power
+          name: Current Power
+        - entity: sensor.freezer_energy
+          name: Total Power
+          color: gray
+          y_axis: secondary
+      hours_to_show: 6
+      color_thresholds:
+        - value: 50
+          color: green
+        - value: 100
+          color: orange
+        - value: 150
+          color: red
+      line_width: 3
+      show:
+        labels: true
+        legend: false
+        labels_secondary: true
+      icon: mdi:fridge
+      name: Freezer Power Consumption
+      type: custom:mini-graph-card
+
+    - entities:
+        - entity: sensor.homelab_power
+          name: Current Power
+        - entity: sensor.homelab_energy
+          name: Total Power
+          color: gray
+          y_axis: secondary
+      hours_to_show: 6
+      color_thresholds:
+        - value: 50
+          color: green
+        - value: 100
+          color: orange
+        - value: 150
+          color: red
+      line_width: 3
+      show:
+        labels: true
+        legend: false
+        labels_secondary: true
+      icon: mdi:desktop-tower
+      name: Homelab Consumption
+      type: custom:mini-graph-card

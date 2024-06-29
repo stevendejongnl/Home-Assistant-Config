@@ -1,0 +1,16 @@
+- title: Desk
+  path: desk
+  icon: mdi:desktop-tower-monitor
+  badges: []
+  cards:
+    - type: entities
+      entities:
+        - entity: switch.desk
+        - entity: light.bureau
+          name: HUE Led
+        - entity: sensor.hue_dimmer_switch_battery
+        - entity: sensor.desk_power
+          name: Power
+      state_color: true
+      title: Desk
+      show_header_toggle: false

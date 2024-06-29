@@ -1,0 +1,79 @@
+- title: Living Room
+  path: living-room
+  icon: mdi:television
+  badges: []
+  cards:
+    - show_name: true
+      show_icon: false
+      type: button
+      name: TV/Spotify switch
+      tap_action:
+        action: call-service
+        service: switch.toggle
+        service_data: {}
+        confirmation:
+          text: Are you sure you want to do it?
+        target:
+          entity_id:
+            - switch.tv
+      hold_action:
+        action: none
+      show_state: true
+      entity: switch.tv
+
+    - type: entities
+      entities:
+        - entity: sensor.tv_power
+          name: Power
+      title: TV
+      show_header_toggle: false
+      state_color: true
+
+    - type: media-control
+      entity: media_player.woonkamer
+
+    - type: grid
+      square: false
+      columns: 1
+      cards:
+        - type: entities
+          entities:
+            - remote.chromecast_hd
+          title: Chromecast HD
+        - type: media-control
+          entity: media_player.chromecast_hd
+    - type: custom:roku-card
+      entity: media_player.sony_bravia_tv
+      tv: true
+      power:
+        tap_action:
+          action: call-service
+          service: remote.toggle
+          service_data:
+            entity_id: remote.sony_bravia_tv
+          confirmation:
+            text: Are you sure you want to do it?
+          target:
+            entity_id:
+              - remote.sony_bravia_tv
+      volume_up:
+        tap_action:
+          action: call-service
+          service: remote.send_command
+          service_data:
+            entity_id: remote.sony_bravia_tv
+            command: VolumeUp
+      volume_down:
+        tap_action:
+          action: call-service
+          service: remote.send_command
+          service_data:
+            entity_id: remote.sony_bravia_tv
+            command: VolumeDown
+      volume_mute:
+        tap_action:
+          action: call-service
+          service: remote.send_command
+          service_data:
+            entity_id: remote.sony_bravia_tv
+            command: VolumeMute

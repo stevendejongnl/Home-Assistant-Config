@@ -1,0 +1,23 @@
+- platform: systemmonitor
+  resources:
+    - type: disk_use_percent
+      arg: /config
+    - type: memory_free
+
+- platform: template
+  sensors:
+    steven_geo:
+      value_template: >
+        {{ state_attr('sensor.iphone_van_steven_geocoded_location', 'Location') | replace('[','') | replace(']','') }}
+
+
+- platform: template
+  sensors:
+      pm25_starkvind:
+        friendly_name: "PM2.5 Starkvind"
+        unit_of_measurement: "µg/m³"
+        value_template: "{{ states('sensor.starkvind_pm25') }}"
+      pm25_vindstyrka:
+        friendly_name: "PM2.5 Vindstyrka"
+        unit_of_measurement: "µg/m³"
+        value_template: "{{ states('sensor.vindstyrka_pm25') }}"

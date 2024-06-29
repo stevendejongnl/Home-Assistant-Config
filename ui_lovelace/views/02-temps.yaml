@@ -1,0 +1,141 @@
+- title: Temps
+  path: temps
+  icon: mdi:thermometer
+  badges: []
+  cards:
+    - type: history-graph
+      entities:
+        - sensor.bedroom_scott_thermal_comfort_humidex_perception
+      title: Bedroom (Scott)
+      hours_to_show: 4
+    - type: custom:mushroom-humidifier-card
+      entity: sensor.bedroom_scott_humidity
+    - entities:
+        - entity: sensor.bedroom_scott_temperature
+          name: Temperature
+          color: green
+      hours_to_show: 6
+      color_thresholds:
+        - value: 16
+          color: green
+        - value: 24
+          color: orange
+        - value: 40
+          color: red
+      line_width: 3
+      show:
+        labels: true
+        legend: true
+        labels_secondary: true
+      icon: mdi:thermometer
+      name: Bedroom (Scott) temperature
+      type: custom:mini-graph-card
+    - type: history-graph
+      entities:
+        - sensor.bathroom_thermal_comfort_humidex_perception
+      hours_to_show: 4
+      title: Bathroom
+    - type: custom:mushroom-humidifier-card
+      entity: sensor.bathroom_humidity
+    - entities:
+        - entity: sensor.bathroom_temperature
+          name: Temperature
+          color: green
+      hours_to_show: 3
+      color_thresholds:
+        - value: 16
+          color: green
+        - value: 24
+          color: orange
+        - value: 40
+          color: red
+      line_width: 3
+      show:
+        labels: true
+        legend: true
+        labels_secondary: true
+      icon: mdi:thermometer
+      name: Bathroom temperature
+      type: custom:mini-graph-card
+    - type: history-graph
+      entities:
+        - sensor.kitchen_thermal_comfort_humidex_perception
+      hours_to_show: 4
+      title: Kitchen
+    - type: custom:mushroom-humidifier-card
+      entity: sensor.kitchen_humidity
+    - entities:
+        - entity: sensor.kitchen_temperature
+          name: Temperature
+          color: green
+      hours_to_show: 6
+      color_thresholds:
+        - value: 16
+          color: green
+        - value: 24
+          color: orange
+        - value: 40
+          color: red
+      line_width: 3
+      show:
+        labels: true
+        legend: true
+        labels_secondary: true
+      icon: mdi:thermometer
+      name: Kitchen temperature
+      type: custom:mini-graph-card
+    - type: history-graph
+      entities:
+        - sensor.living_room_window_thermal_comfort_humidex_perception
+      hours_to_show: 4
+      logarithmic_scale: false
+      title: Living room (window)
+    - type: custom:mushroom-humidifier-card
+      entity: sensor.living_room_window_humidity
+    - entities:
+        - entity: sensor.living_room_window_temperature
+          name: Temperature
+          color: green
+      hours_to_show: 6
+      color_thresholds:
+        - value: 16
+          color: green
+        - value: 24
+          color: orange
+        - value: 40
+          color: red
+      line_width: 3
+      show:
+        labels: true
+        legend: true
+        labels_secondary: true
+      icon: mdi:thermometer
+      name: Living room temperature
+      type: custom:mini-graph-card
+    - type: history-graph
+      entities:
+        - sensor.bedroom_thermal_comfort_humidex_perception
+      hours_to_show: 4
+      title: Bedroom
+    - type: custom:mushroom-humidifier-card
+      entity: sensor.bedroom_humidity
+    - entities:
+        - entity: sensor.bedroom_temperature
+          name: Temperature
+          color: green
+      hours_to_show: 6
+      color_thresholds:
+        - value: 16
+          color: green
+        - value: 24
+          color: orange
+        - value: 40
+          color: red
+      line_width: 3
+      show:
+        labels: true
+        legend: true
+        labels_secondary: true
+      icon: mdi:thermometer
+      name: bedroom temperature
+      type: custom:mini-graph-card

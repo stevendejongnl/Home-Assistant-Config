@@ -2,4 +2,6 @@
 *.log
 log*.txt
 *.db
+.storeage
+zigbee2mqtt
 secrets.yaml

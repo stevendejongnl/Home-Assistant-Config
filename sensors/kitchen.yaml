@@ -1,0 +1,23 @@
+- platform: template
+  sensors:
+    dishwasher_on_time:
+      value_template: >
+        {{ (as_timestamp(now())
+            - state_attr('input_datetime.dishwasher_start', 'timestamp'))
+           |timestamp_custom('%H:%M:%S', false) }}
+    dishwasher_on_time_complete:
+      friendly_name: Dishwasher on Timer
+      value_template: >
+        {% if is_state('input_select.dishwasher_status', 'Running') %}
+          {{ states('sensor.dishwasher_on_time') }}
+        {% else %}
+          {{ states.input_select.dishwasher_status.state }}
+        {% endif %}
+
+- platform: statistics
+  name: "Freezer Power Average"
+  entity_id: sensor.freezer_power
+  sampling_size: 15
+  state_characteristic: mean
+  max_age:
+    minutes: 15
