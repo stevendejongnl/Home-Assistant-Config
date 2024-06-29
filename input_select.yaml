@@ -1,0 +1,24 @@
+dryer_status:
+  name: Dryer Status
+  options:
+    - "Idle"
+    - "Running"
+    - "Clean"
+  initial: "Idle"
+
+washing_machine_status:
+  name: Washing Machine Status
+  options:
+    - "Idle"
+    - "Running"
+    - "Clean"
+  initial: "Idle"
+  
+dishwasher_status:
+  name: Dishwasher Status
+  options:
+    - "Dirty"
+    - "Running"
+    - "Drying"
+    - "Clean"
+  initial: "Dirty"

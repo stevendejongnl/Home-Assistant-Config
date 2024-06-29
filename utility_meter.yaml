@@ -1,0 +1,51 @@
+# https://community.home-assistant.io/t/energy-gas-and-water-consumption-overview/151306
+###### DSMR METER READINGS ######
+hourly_power_offpeak:
+  source: sensor.power_consumption_low
+  cycle: hourly
+hourly_power_peak:
+  source: sensor.power_consumption_normal
+  cycle: hourly
+hourly_gas:
+  source: sensor.gas_consumption
+  cycle: hourly
+
+daily_power_offpeak:
+  source: sensor.power_consumption_low
+  cycle: daily
+daily_power_peak:
+  source: sensor.power_consumption_normal
+  cycle: daily
+daily_gas:
+  source: sensor.gas_consumption
+  cycle: daily
+
+weekly_power_offpeak:
+  source: sensor.power_consumption_low
+  cycle: weekly
+weekly_power_peak:
+  source: sensor.power_consumption_normal
+  cycle: weekly
+weekly_gas:
+  source: sensor.gas_consumption
+  cycle: weekly
+
+monthly_power_offpeak:
+  source: sensor.power_consumption_low
+  cycle: monthly
+monthly_power_peak:
+  source: sensor.power_consumption_normal
+  cycle: monthly
+monthly_gas:
+  source: sensor.gas_consumption
+  cycle: monthly
+
+yearly_power_offpeak:
+  source: sensor.power_consumption_low
+  cycle: yearly
+yearly_power_peak:
+  source: sensor.power_consumption_normal
+  cycle: yearly
+yearly_gas:
+  source: sensor.gas_consumption
+  cycle: yearly

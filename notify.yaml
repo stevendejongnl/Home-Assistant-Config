@@ -1,0 +1,21 @@
+- platform: group
+  name: steven
+  services:
+    - service: mobile_app_steven
+    - service: mobile_app_lenovo_tb125fu
+    - service: steven_browser
+
+- platform: group
+  name: anja
+  services:
+    - service: mobile_app_iphone_van_anja
+
+- name: family
+  platform: group
+  services:
+    - service: steven
+    - service: anja
+
+- name: telegram_scream_bot
+  platform: telegram
+  chat_id: !secret telegram_scream_bot_chat_id_steven

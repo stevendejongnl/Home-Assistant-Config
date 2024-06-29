@@ -1,0 +1,7 @@
+- platform: caldav
+  url: https://caldav.icloud.com
+  username: !secret homeassistant_icloud_calendar_email
+  password: !secret homeassistant_icloud_calendar_password
+  calendars:
+    - Agenda
+    - Familie

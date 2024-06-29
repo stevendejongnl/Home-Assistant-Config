@@ -1,0 +1,19 @@
+title: Dashboard
+views: !include_dir_merge_list ui_lovelace/views
+resources:
+  - url: /local/community/uptime-card/uptime-card.js
+    type: module
+  - url: /local/community/vacuum-card/vacuum-card.js
+    type: module
+  - url: /local/community/button-card/button-card.js
+    type: module
+  - url: /local/community/bignumber-card/bignumber-card.js
+    type: module
+  - url: /local/community/lovelace-mushroom/mushroom.js
+    type: module
+  - url: /local/community/air-visual-card/air-visual-card.js
+    type: module
+  - url: /local/mini-graph-card/mini-graph-card-bundle.js
+    type: module
+  - url: /local/community/roku-card/roku-card.js
+    type: module

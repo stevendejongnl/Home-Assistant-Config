@@ -1,0 +1,14 @@
+- device_name: iPhone van Steven
+  name: Steven
+  email: !secret device_email_steven
+  picture: /local/dashboards/steven/profile-small.jpg
+
+- device_name: iPhone van Anja
+  name: Anja
+  email: !secret device_email_anja
+  picture: /local/dashboards/anja/profile-small.jpg
+
+- device_name: ford_fiesta
+  friendly_name: Ford Fiesta
+  picture: /local/ford-fiesta.jpg
+  entity_picture: /local/ford-fiesta.jpg

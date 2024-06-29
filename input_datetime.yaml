@@ -1,0 +1,9 @@
+dryer_start:
+  has_date: true
+  has_time: true
+washing_machine_start:
+  has_date: true
+  has_time: true
+dishwasher_start:
+  has_date: true
+  has_time: true

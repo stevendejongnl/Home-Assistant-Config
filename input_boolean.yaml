@@ -1,0 +1,6 @@
+dryer:
+washing_machine:
+dishwasher:
+start_flip_delayed:
+  name: Start Your Automation
+  initial: off

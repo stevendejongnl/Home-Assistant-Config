@@ -1,0 +1,4 @@
+filter:
+  include_entities:
+    - switch.desk
+    - automation.start_flip_delayed

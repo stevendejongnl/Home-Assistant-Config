@@ -1,0 +1,9 @@
+devices:
+ - device_name: iphone_van_steven
+   email: !secret device_email_steven
+   name: Steven
+   picture: /local/dashboards/steven/profile-small.jpg
+ - device_name: iphone_van_anja
+   email: !secret device_email_steven
+   name: Anja
+   picture: /local/dashboards/anja/profile-small.jpg
