@@ -1,0 +1,144 @@
+- id: "19a7ecd9-e171-4a25-b8a2-e8cd0cca12b0"
+  alias: Ford Fiesta arrived at home
+  description: ""
+  trigger:
+    - platform: zone
+      entity_id: device_tracker.ford_fiesta
+      zone: zone.home
+      event: enter
+  condition: []
+  action:
+    - service: notify.steven
+      data:
+        message: arrived at home
+        title: Ford Fiesta
+  mode: single
+
+- id: "9a64b391-484e-47b6-9996-67bd2d0f5932"
+  alias: Ford Fiesta left home
+  description: ""
+  trigger:
+    - platform: zone
+      entity_id: device_tracker.ford_fiesta
+      zone: zone.home
+      event: leave
+  condition: []
+  action:
+    - service: notify.steven
+      data:
+        message: left home
+        title: Ford Fiesta
+  mode: single
+
+- id: "3bd17ef4-2130-43d4-aa2f-4a3166749015"
+  alias: Steven arrived at CloudSuite
+  description: ""
+  trigger:
+    - platform: zone
+      entity_id: device_tracker.ford_fiesta
+      zone: zone.work_steven
+      event: enter
+  condition: []
+  action:
+    - service: notify.steven
+      data:
+        message: at CloudSuite
+        title: Steven arrived
+  mode: single
+
+- id: "ae79dc24-3a5f-47a7-810a-852b6be61d22"
+  alias: Steven left CloudSuite
+  description: ""
+  trigger:
+    - platform: zone
+      entity_id: device_tracker.ford_fiesta
+      zone: zone.work_steven
+      event: leave
+  condition: []
+  action:
+    - service: notify.steven
+      data:
+        message: CloudSuite
+        title: Steven left
+  mode: single
+
+- id: "b67c64a3-5893-4fe9-ac2e-9f3d44a938c9"
+  alias: Anja arrived at CompaNanny Schiphol
+  description: ""
+  trigger:
+    - platform: zone
+      entity_id: device_tracker.ford_fiesta
+      zone: zone.work_anja
+      event: enter
+  condition: []
+  action:
+    - service: notify.steven
+      data:
+        message: at CompaNanny Schiphol
+        title: Anja arrived
+  mode: single
+
+- id: "66f88af7-8cca-4858-8235-67d3d19d4991"
+  alias: Anja left CompaNanny Schiphol
+  description: ""
+  trigger:
+    - platform: zone
+      entity_id: device_tracker.ford_fiesta
+      zone: zone.work_anja
+      event: leave
+  condition: []
+  action:
+    - service: notify.steven
+      data:
+        message: CompaNanny Schiphol
+        title: Anja left
+  mode: single
+
+- id: "1707237670467"
+  alias: Anja arrived at CompaNanny WFC
+  description: ""
+  trigger:
+    - platform: zone
+      entity_id: device_tracker.ford_fiesta
+      zone: zone.work_anja_wfc
+      event: enter
+  condition: []
+  action:
+    - service: notify.steven
+      data:
+        message: at CompaNanny WFC
+        title: Anja arrived
+  mode: single
+
+- id: "1707237639241"
+  alias: Anja Left CompaNanny WFC
+  description: ""
+  trigger:
+    - platform: zone
+      entity_id: device_tracker.ford_fiesta
+      zone: zone.work_anja_wfc
+      event: leave
+  condition: []
+  action:
+    - service: notify.steven
+      data:
+        message: CompaNanny WFC
+        title: Anja left
+  mode: single
+
+- id: "1719582501331"
+  alias: Ford Fiesta start moving
+  description: ""
+  trigger:
+    - type: motion
+      platform: device
+      device_id: bda2ae3a4d9a2eaa1929a3bab35f456c
+      entity_id: 8a081693cc37d327fce38bfd6b076c2a
+      domain: binary_sensor
+  condition: []
+  action:
+    - service: notify.steven
+      data:
+        message: start moving
+        title: Ford Fiesta
+  mode: single

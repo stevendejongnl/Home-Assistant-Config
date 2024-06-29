@@ -1,0 +1,128 @@
+- alias: Set dishwasher active when power detected
+  trigger:
+    - platform: template
+      value_template: "{% if states.sensor.dishwasher_power.state | float > 5 %} true {% endif %}"
+  condition:
+    condition: or
+    conditions:
+      - condition: state
+        entity_id: input_select.dishwasher_status
+        state: "Dirty"
+      - condition: state
+        entity_id: input_select.dishwasher_status
+        state: "Clean"
+      - condition: state
+        entity_id: input_select.dishwasher_status
+        state: "Drying"
+  action:
+    - service: input_select.select_option
+      data:
+        entity_id: input_select.dishwasher_status
+        option: "Running"
+
+- alias: Set dishwasher drying when power drops
+  trigger:
+    - platform: template
+      value_template: "{% if states.sensor.dishwasher_power.state | float <= 4 %} true {% endif %}"
+  condition:
+    condition: and
+    conditions:
+      - condition: state
+        entity_id: input_select.dishwasher_status
+        state: "Running"
+  action:
+    - service: input_select.select_option
+      data:
+        entity_id: input_select.dishwasher_status
+        option: "Drying"
+
+- alias: Set dishwasher clean
+  trigger:
+    - platform: state
+      entity_id: input_select.dishwasher_status
+      to: Drying
+      for:
+        minutes: 35
+  condition:
+    condition: and
+    conditions:
+      - condition: state
+        entity_id: input_select.dishwasher_status
+        state: "Drying"
+  action:
+    - service: input_select.select_option
+      data:
+        entity_id: input_select.dishwasher_status
+        option: "Clean"
+
+- alias: Set Dishwasher dirty when power off
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.dishwasher_power
+      below: 1
+  condition:
+    condition: and
+    conditions:
+      - condition: numeric_state
+        entity_id: sensor.dishwasher_power
+        below: 1
+      - condition: or
+        conditions:
+          - condition: state
+            entity_id: input_select.dishwasher_status
+            state: "Clean"
+          - condition: state
+            entity_id: input_select.dishwasher_status
+            state: "Drying"
+  action:
+    - service: input_select.select_option
+      data:
+        entity_id: input_select.dishwasher_status
+        option: "Dirty"
+
+- alias: Dishwasher timer start
+  trigger:
+    - platform: template
+      value_template: "{% if states.sensor.dishwasher_power.state | float > 5 %} true {% endif %}"
+  action:
+    - service: input_datetime.set_datetime
+      entity_id: input_datetime.dishwasher_start
+      data_template:
+        datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+
+- alias: Dishwasher update part two
+  trigger:
+    - platform: time_pattern
+      seconds: "*"
+  condition:
+    - condition: template
+      value_template: "{% if states.sensor.dishwasher_power.state | float > 5 %} true {% endif %}"
+  action:
+    - service: homeassistant.update_entity
+      entity_id: sensor.dishwasher_on_time
+
+# Alert
+- alias: Send alert when dishwasher is clean
+  trigger:
+    - platform: state
+      entity_id: input_select.dishwasher_status
+      to: "Clean"
+  condition:
+    - condition: state
+      entity_id: input_select.dishwasher_status
+      state: "Clean"
+  action:
+    - service: notify.steven
+      data:
+        message: "The Dishwasher has finished and is ready to be emptied!"
+        title: "Dishwasher Update"
+
+- alias: "Check Freezer Power"
+  trigger:
+    platform: numeric_state
+    entity_id: sensor.freezer_power_average
+    above: 50
+  action:
+    service: notify.telegram_scream_bot
+    data:
+      message: "Warning: The freezer door might still be open! ({{ sensor.freezer_power_average }}w)"

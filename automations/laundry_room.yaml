@@ -1,0 +1,209 @@
+- alias: Set washing machine active when power detected
+  trigger:
+    - platform: template
+      value_template: "{% if states.sensor.washing_machine_power.state | float > 10 %} true {% endif %}"
+  condition:
+    condition: or
+    conditions:
+      - condition: state
+        entity_id: input_select.washing_machine_status
+        state: "Idle"
+      - condition: state
+        entity_id: input_select.washing_machine_status
+        state: "Clean"
+      - condition: state
+        entity_id: input_select.washing_machine_status
+        state: "Finishing"
+  action:
+    - service: input_select.select_option
+      data:
+        entity_id: input_select.washing_machine_status
+        option: "Running"
+
+- alias: Set dryer active when power detected
+  trigger:
+    - platform: template
+      value_template: "{% if states.sensor.dryer_power.state | float > 250 %} true {% endif %}"
+  condition:
+    condition: or
+    conditions:
+      - condition: state
+        entity_id: input_select.dryer_status
+        state: "Idle"
+      - condition: state
+        entity_id: input_select.dryer_status
+        state: "Clean"
+      - condition: state
+        entity_id: input_select.dryer_status
+        state: "Finishing"
+  action:
+    - service: input_select.select_option
+      data:
+        entity_id: input_select.dryer_status
+        option: "Running"
+
+- alias: Set washing machine finished when power drops
+  trigger:
+    - platform: template
+      value_template: "{% if states.sensor.washing_machine_power.state | float <= 2 %} true {% endif %}"
+  condition:
+    - condition: state
+      entity_id: input_select.washing_machine_status
+      state: "Running"
+  action:
+    - delay: '00:05:00'
+    - condition: state
+      entity_id: input_select.washing_machine_status
+      state: "Running"
+    - condition: numeric_state
+      entity_id: sensor.washing_machine_power
+      below: 7
+    - service: input_select.select_option
+      data:
+        entity_id: input_select.washing_machine_status
+        option: "Clean"
+ 
+- alias: Set dryer finished when power drops
+  trigger:
+    - platform: template
+      value_template: "{% if states.sensor.dryer_power.state | float <= 250 %} true {% endif %}"
+  condition:
+    condition: and
+    conditions:
+      - condition: state
+        entity_id: input_select.dryer_status
+        state: "Running"
+  action:
+    - service: input_select.select_option
+      data:
+        entity_id: input_select.dryer_status
+        option: "Clean"
+
+- alias: Set dryer finishing
+  trigger:
+    - platform: state
+      entity_id: input_select.dryer_status
+      to: Clean
+      for:
+        minutes: 35
+  condition:
+    condition: and
+    conditions:
+      - condition: state
+        entity_id: input_select.dryer_status
+        state: "Finishing"
+  action:
+    - service: input_select.select_option
+      data:
+        entity_id: input_select.dryer_status
+        option: "Clean"
+ 
+- alias: Set dryer idle when power off
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.dryer_power
+      below: 1
+  condition:
+    condition: and
+    conditions:
+      - condition: numeric_state
+        entity_id: sensor.dryer_power
+        below: 1
+      - condition: or
+        conditions:
+        - condition: state
+          entity_id: input_select.dryer_status
+          state: "Clean"
+        - condition: state
+          entity_id: input_select.dryer_status
+          state: "Finishing"
+  action:
+    - service: input_select.select_option
+      data:
+        entity_id: input_select.dryer_status
+        option: "Idle"
+
+
+# Start timers
+
+- alias: Washing Machine timer start
+  trigger:
+    - platform: template
+      value_template: "{% if states.sensor.washing_machine_power.state | float > 5 %} true {% endif %}"
+  action:
+  - service: input_datetime.set_datetime
+    entity_id: input_datetime.washing_machine_start
+    data_template:
+      datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+        
+- alias: Washing Machine update part two
+  trigger:
+  - platform: time_pattern
+    seconds: '*'
+  condition:
+    - condition: template
+      value_template: "{% if states.sensor.washing_machine_power.state | float > 5 %} true {% endif %}"
+  action:
+  - service: homeassistant.update_entity
+    entity_id: sensor.washing_machine_on_time    
+
+- alias: Dryer timer start
+  trigger:
+    - platform: template
+      value_template: "{% if states.sensor.dryer_power.state | float > 250 %} true {% endif %}"
+  action:
+  - service: input_datetime.set_datetime
+    entity_id: input_datetime.dryer_start
+    data_template:
+      datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+        
+- alias: Dryer timer update part two
+  trigger:
+  - platform: time_pattern
+    seconds: '*'
+  condition:
+    - condition: template
+      value_template: "{% if states.sensor.dryer_power.state | float > 250 %} true {% endif %}"
+  action:
+  - service: homeassistant.update_entity
+    entity_id: sensor.dryer_on_time
+
+
+# Alert
+- alias: Send alert when washing machine is finished
+  trigger:
+    - platform: state
+      entity_id: input_select.washing_machine_status
+      to: "Clean"
+  condition:
+    - condition: state
+      entity_id: input_select.washing_machine_status
+      state: "Clean"
+  action:
+    - service: notify.steven
+      data:
+        message: 'The Washing Machine has finished and is ready to be emptied!'
+        title: 'Washing Machine Update'
+    - service: input_select.select_option
+      data:
+        entity_id: input_select.washing_machine_status
+        option: "Idle"
+
+- alias: Send alert when dryer is clean
+  trigger:
+    - platform: state
+      entity_id: input_select.dryer_status
+      to: "Clean"
+  condition:
+    - condition: state
+      entity_id: input_select.dryer_status
+      state: "Clean"
+  action:
+    - service: notify.steven
+      data:
+        message: 'The Dryer has finished and is ready to be emptied!'
+        title: 'Dryer Update'
+    - service: input_select.select_option
+      data:
+        entity_id: input_select.dryer_status
+        option: "Idle"

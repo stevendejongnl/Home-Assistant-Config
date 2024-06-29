@@ -1,0 +1,67 @@
+- id: 6dcb7512175a47d8a565ea3cd567cea9
+  alias: New file alert
+  trigger:
+    platform: event
+    event_type: folder_watcher
+    event_data:
+      event_type: created
+  action:
+    service: notify.steven
+    data:
+      title: New image captured!
+      message:
+        Created {{ trigger.event.data.file }} in {{ trigger.event.data.folder
+        }}
+      data:
+        file: "{{ trigger.event.data.path }}"
+
+- id: 35aaf2f53b804dea98123dee088e9b38
+  alias: Automatic Theme Change
+  trigger:
+    - platform: homeassistant
+      event: start
+  action:
+    - service_template: frontend.set_theme
+      data_template:
+        name: dark_teal
+
+- id: "1638830685631"
+  alias: Notify ha start
+  description: ""
+  trigger:
+    - platform: homeassistant
+      event: start
+  condition: []
+  action:
+    - service: notify.steven
+      data:
+        message: Turned on
+  mode: single
+
+- id: "1641466279093"
+  alias: Notify ha shutdown
+  description: ""
+  trigger:
+    - platform: homeassistant
+      event: shutdown
+  condition: []
+  action:
+    - service: notify.steven
+      data:
+        message: Turned off
+  mode: single
+
+- id: "1693727613678"
+  alias: Update notifications
+  description: ""
+  use_blueprint:
+    path: mdegat01/update_notifications.yaml
+    input:
+      update_entities:
+        - update.home_assistant_core_update
+        - update.home_assistant_operating_system_update
+        - update.home_assistant_supervisor_update
+        - update.hacs_update
+      mobile_app_device: a5aa4919f61ad8883d424faa167516c0
+      mobile_app_device_2: 09fd6f94dedca42ed2f141ecd853ceca
+      send_to_ha: true

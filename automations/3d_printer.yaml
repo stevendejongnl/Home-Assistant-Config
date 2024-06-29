@@ -1,0 +1,70 @@
+- id: "1704362182786"
+  alias: Turn on 3d printer with aqara double click
+  description: ""
+  trigger:
+    - platform: device
+      domain: mqtt
+      device_id: d33e79d7864528e0a641f97e56642545
+      type: click
+      subtype: double
+      discovery_id: 0x00158d00079a2bc7 click_double
+  condition: []
+  action:
+    - service: switch.turn_on
+      metadata: {}
+      data: {}
+      target:
+        device_id: 0b8ccd40cc83dc8f2ed89f4538599a62
+    - service: switch.turn_on
+      metadata: {}
+      data: {}
+      target:
+        device_id: 9a1125e4e7d74a974099a5a05b00de10
+  mode: single
+
+- id: "1704377330338"
+  alias: Turn off 3d printer when not printing
+  description: ""
+  trigger:
+    - platform: state
+      entity_id:
+        - sensor.klipper_current_print_state
+  condition:
+    - condition: not
+      conditions:
+        - condition: state
+          entity_id: sensor.klipper_current_print_state
+          state:
+            - printing
+            - paused
+  action:
+    - delay:
+        hours: 0
+        minutes: 30
+        seconds: 0
+        milliseconds: 0
+    - condition: not
+      conditions:
+        - condition: state
+          entity_id: sensor.klipper_current_print_state
+          state:
+            - printing
+            - paused
+    - device_id: 57a22b1b123149a233c01ca044cb4242
+      domain: button
+      entity_id: c5a4a5288a9f37d93df56fc68304cb3f
+      type: press
+    - delay:
+        hours: 0
+        minutes: 2
+        seconds: 0
+        milliseconds: 0
+    - type: turn_off
+      device_id: 0b8ccd40cc83dc8f2ed89f4538599a62
+      entity_id: a3623c5ae968e4c20030781cca410e4d
+      domain: switch
+    - type: turn_off
+      device_id: 9a1125e4e7d74a974099a5a05b00de10
+      entity_id: c74d5c0069d5cef3b7f89cab3c13407a
+      domain: switch
+  mode: single

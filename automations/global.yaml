@@ -1,0 +1,70 @@
+- id: "1704362218218"
+  alias: Turn on desk with single click aqara
+  description: ""
+  trigger:
+    - platform: device
+      domain: mqtt
+      device_id: d33e79d7864528e0a641f97e56642545
+      type: click
+      subtype: single
+      discovery_id: 0x00158d00079a2bc7 click_single
+  condition: []
+  action:
+    - service: switch.turn_on
+      metadata: {}
+      data: {}
+      target:
+        device_id: 8f373da3ed379acdd4303fa259b3d97f
+  mode: single
+
+- id: "1700073440506"
+  alias: Toothbrush Steven low battery
+  description: ""
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.toothbrush_steven_battery
+      below: "15"
+  condition: []
+  action:
+    - service: notify.steven
+      data:
+        message: Toothbrush battery {{ states("sensor.toothbrush_steven_battery") }}%
+  mode: single
+
+- id: "1700073972154"
+  alias: Toothbrush Anja low battery
+  description: ""
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.toothbrush_anja_battery
+      below: "15"
+  condition: []
+  action:
+    - service: notify.anja
+      data:
+        message: Toothbrush battery {{ states("sensor.toothbrush_anja_battery") }}%
+  mode: single
+
+- id: "1715062839875"
+  alias: Start Flip Delayed
+  description: ""
+  trigger:
+    - platform: state
+      entity_id:
+        - input_boolean.start_flip_delayed
+      to: "on"
+  condition: []
+  action:
+    - delay:
+        hours: 1
+        minutes: 0
+        seconds: 0
+        milliseconds: 0
+    - service: vacuum.start
+      metadata: {}
+      data: {}
+      target:
+        device_id: 3e6fd304c28efdba71d5ad786c24f8ba
+    - service: input_boolean.turn_off
+      entity_id: input_boolean.start_flip_delayed
+  mode: single
