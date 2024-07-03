@@ -1,1 +1,19 @@
-# This file should be empty, we use a directory automations
+- id: '1719947979988'
+  alias: Check MadeBySteven API health
+  description: ''
+  trigger:
+  - platform: time_pattern
+    seconds: /30
+  condition: []
+  action:
+  - service: pyscript.made_by_steven_api
+    data: {}
+  - if:
+    - condition: template
+      value_template: '{{ states(''sensor.made_by_steven_api'') != ''ok'' }}'
+    then:
+    - service: notify.steven
+      data:
+        title: MadeBySteven API
+        message: unhealthy
+  mode: single

@@ -8,6 +8,7 @@
         - entity: sensor.uptime
         - entity: sensor.hacs
         - entity: sensor.memory_free
+        - entity: sensor.made_by_steven_api
         - entity: sensor.freezer_power_average
 
     - type: "custom:uptime-card"

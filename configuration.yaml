@@ -16,9 +16,7 @@ homeassistant:
     device_tracker.ford_fiesta:
       entity_picture: /local/ford-fiesta.jpg
 
-pyscript:
-  allow_all_imports: true
-  hass_is_global: true
+pyscript: !include pyscript/config.yaml
 
 recorder:
   purge_keep_days: 3
@@ -38,6 +36,7 @@ frontend:
   themes: !include_dir_merge_named themes
 group: !include groups.yaml
 notify: !include notify.yaml
+automation old: !include automations.yaml
 automation: !include_dir_merge_list automations/
 script: !include scripts.yaml
 scene: !include scenes.yaml

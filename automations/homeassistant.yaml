@@ -36,6 +36,7 @@
     - service: notify.steven
       data:
         message: Turned on
+    - service: pyscript.reload
   mode: single
 
 - id: "1641466279093"
