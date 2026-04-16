@@ -5,3 +5,14 @@
 
 woonkamer_speakers_restart: >
   curl --request POST 'http://woonkamer-speakers.local/interact/trigger/restart'
+
+# Download a Frigate event snapshot by notification ID
+download_snapshot: 'wget -O /config/www/snapshots/{{ id }}.jpg "http://192.168.1.25:8123/api/frigate/notifications/{{ id }}/snapshot.jpg?bbox=1"'
+
+# Snapshot retention: keeps the newest 25 files, deletes the rest
+cleanup_snapshots: >
+  bash -c "if [ -d /config/www/snapshots ]; then
+    ls -t /config/www/snapshots | tail -n +26 | while read file; do
+      rm -f /config/www/snapshots/\"$file\";
+    done;
+  fi"
