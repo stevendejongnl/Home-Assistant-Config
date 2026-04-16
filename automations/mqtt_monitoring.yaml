@@ -1,0 +1,182 @@
+# =============================================================================
+# MQTT & Zigbee2MQTT Monitoring
+# Auto-detects Z2M/MQTT failures and restarts containers via Proxmox API.
+# =============================================================================
+
+# Scenario 1: Z2M disconnected but MQTT broker is healthy
+# (bridge state = "off" means HA received LWT via MQTT)
+- id: 'mqtt_monitoring_z2m_bridge_offline'
+  alias: 'MQTT Monitoring: Restart Z2M when bridge goes offline'
+  description: >
+    Z2M bridge connection went to "off" — MQTT broker is reachable but Z2M
+    disconnected. Restarts Z2M container after 3 minutes.
+  triggers:
+    - trigger: state
+      entity_id:
+        - binary_sensor.zigbee2mqtt_bridge_connection_state
+      to: 'off'
+      for:
+        minutes: 3
+  conditions: []
+  actions:
+    - action: notify.steven
+      data:
+        title: Zigbee2MQTT
+        message: >
+          Bridge offline (MQTT broker OK). Restarting Z2M container...
+    - action: rest_command.proxmox_stop_z2m
+    - repeat:
+        count: 12
+        sequence:
+          - delay: '00:00:05'
+          - action: rest_command.proxmox_status_z2m
+            response_variable: status_response
+          - condition: template
+            value_template: "{{ status_response.content.data.status == 'stopped' }}"
+            alias: Break when stopped
+    - action: rest_command.proxmox_start_z2m
+    - repeat:
+        count: 12
+        sequence:
+          - delay: '00:00:05'
+          - action: rest_command.proxmox_status_z2m
+            response_variable: status_response
+          - condition: template
+            value_template: "{{ status_response.content.data.status == 'running' }}"
+            alias: Break when running
+    - delay:
+        seconds: 30
+    - choose:
+        - conditions:
+            - condition: state
+              entity_id: binary_sensor.zigbee2mqtt_bridge_connection_state
+              state: 'on'
+          sequence:
+            - action: notify.steven
+              data:
+                title: Zigbee2MQTT
+                message: Restarted successfully. Bridge is back online.
+      default:
+        - action: notify.steven
+          data:
+            title: Zigbee2MQTT
+            message: >
+              Container restarted but bridge still offline.
+              Manual investigation needed.
+  mode: single
+
+# Scenario 2: MQTT broker is down (HA lost MQTT connection entirely)
+# (bridge state = "unavailable" means HA can't reach MQTT)
+- id: 'mqtt_monitoring_broker_offline'
+  alias: 'MQTT Monitoring: Restart MQTT broker when connection lost'
+  description: >
+    Z2M bridge entity became "unavailable" — HA lost MQTT connection.
+    Restarts MQTT broker first, then Z2M.
+  triggers:
+    - trigger: state
+      entity_id:
+        - binary_sensor.zigbee2mqtt_bridge_connection_state
+      to: 'unavailable'
+      for:
+        minutes: 3
+  conditions: []
+  actions:
+    - action: notify.steven
+      data:
+        title: MQTT Broker
+        message: >
+          MQTT connection lost. Restarting broker (CT 121), then Z2M (CT 100)...
+    # Step 1: Restart MQTT broker
+    - action: rest_command.proxmox_stop_mqtt
+    - repeat:
+        count: 12
+        sequence:
+          - delay: '00:00:05'
+          - action: rest_command.proxmox_status_mqtt
+            response_variable: status_response
+          - condition: template
+            value_template: "{{ status_response.content.data.status == 'stopped' }}"
+            alias: Break when stopped
+    - action: rest_command.proxmox_start_mqtt
+    - repeat:
+        count: 12
+        sequence:
+          - delay: '00:00:05'
+          - action: rest_command.proxmox_status_mqtt
+            response_variable: status_response
+          - condition: template
+            value_template: "{{ status_response.content.data.status == 'running' }}"
+            alias: Break when running
+    # Wait for Mosquitto to fully initialize
+    - delay:
+        seconds: 15
+    - action: notify.steven
+      data:
+        title: MQTT Broker
+        message: MQTT broker restarted. Now restarting Z2M...
+    # Step 2: Restart Z2M
+    - action: rest_command.proxmox_stop_z2m
+    - repeat:
+        count: 12
+        sequence:
+          - delay: '00:00:05'
+          - action: rest_command.proxmox_status_z2m
+            response_variable: status_response
+          - condition: template
+            value_template: "{{ status_response.content.data.status == 'stopped' }}"
+            alias: Break when stopped
+    - action: rest_command.proxmox_start_z2m
+    - repeat:
+        count: 12
+        sequence:
+          - delay: '00:00:05'
+          - action: rest_command.proxmox_status_z2m
+            response_variable: status_response
+          - condition: template
+            value_template: "{{ status_response.content.data.status == 'running' }}"
+            alias: Break when running
+    - delay:
+        seconds: 30
+    - choose:
+        - conditions:
+            - condition: state
+              entity_id: binary_sensor.zigbee2mqtt_bridge_connection_state
+              state: 'on'
+          sequence:
+            - action: notify.steven
+              data:
+                title: MQTT Broker
+                message: >
+                  MQTT broker + Z2M restarted successfully. Bridge is online.
+      default:
+        - action: notify.steven
+          data:
+            title: MQTT Broker
+            message: >
+              Both containers restarted but bridge still offline.
+              Manual investigation needed.
+  mode: single
+
+# Safety net: catches cases where auto-restart failed
+- id: 'mqtt_monitoring_periodic_health_check'
+  alias: 'MQTT Monitoring: Periodic health check'
+  description: >
+    Every 10 minutes, checks if Z2M bridge is online. Only notifies if
+    it's still down (the state-based automations handle restarts).
+  triggers:
+    - trigger: time_pattern
+      minutes: '/10'
+  conditions:
+    - condition: not
+      conditions:
+        - condition: state
+          entity_id: binary_sensor.zigbee2mqtt_bridge_connection_state
+          state: 'on'
+  actions:
+    - action: notify.steven
+      data:
+        title: MQTT Health Check
+        message: >
+          Z2M bridge is {{ states('binary_sensor.zigbee2mqtt_bridge_connection_state') }}.
+          Auto-restart may have failed — check manually.
+  mode: single

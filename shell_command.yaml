@@ -3,34 +3,5 @@
 # External commands callable from automations and scripts.
 # =============================================================================
 
-# Query Proxmox API for Frigate container status (LXC 117)
-# Proxmox API proxy IP: see !secret proxmox_api_ip
-proxmox_api_status_frigate: >
-  curl 'http://192.168.1.248:7452/pve1/container/117/status'
-
-# Start Frigate container via Proxmox API
-proxmox_api_start_frigate: >
-  curl --request POST 'http://192.168.1.248:7452/pve1/container/117/start'
-
-# Stop Frigate container via Proxmox API
-proxmox_api_stop_frigate: >
-  curl --request POST 'http://192.168.1.248:7452/pve1/container/117/stop'
-
-# Convert a JPG image to PNG (used for doorbell snapshots)
-convert_jpg_to_png: "/config/scripts/convert.sh {{ input_path }} {{ output_path }}"
-
-# Restart woonkamer (living room) speakers via HTTP trigger
 woonkamer_speakers_restart: >
   curl --request POST 'http://woonkamer-speakers.local/interact/trigger/restart'
-
-# Download a Frigate event snapshot by notification ID
-# Frigate HA IP: see !secret frigate_ha_ip
-download_snapshot: 'wget -O /config/www/snapshots/{{ id }}.jpg "http://192.168.1.25:8123/api/frigate/notifications/{{ id }}/snapshot.jpg?bbox=1"'
-
-# Snapshot retention: keeps the newest 25 files, deletes the rest
-cleanup_snapshots: >
-  bash -c "if [ -d /config/www/snapshots ]; then
-    ls -t /config/www/snapshots | tail -n +26 | while read file; do
-      rm -f /config/www/snapshots/\"$file\";
-    done;
-  fi"

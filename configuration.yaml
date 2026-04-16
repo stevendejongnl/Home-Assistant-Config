@@ -106,6 +106,46 @@ rest_command:
       {"x.com.samsung.da.operatetimesync": {"x.com.samsung.da.time":
       "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"}}]}]}
 
+  # --- Proxmox API: Zigbee2MQTT (CT 100) ---
+  proxmox_status_z2m:
+    url: !secret proxmox_api_url_z2m_status
+    method: GET
+    headers:
+      Authorization: !secret proxmox_api_token
+    verify_ssl: false
+  proxmox_stop_z2m:
+    url: !secret proxmox_api_url_z2m_stop
+    method: POST
+    headers:
+      Authorization: !secret proxmox_api_token
+    verify_ssl: false
+  proxmox_start_z2m:
+    url: !secret proxmox_api_url_z2m_start
+    method: POST
+    headers:
+      Authorization: !secret proxmox_api_token
+    verify_ssl: false
+
+  # --- Proxmox API: MQTT Broker (CT 121) ---
+  proxmox_status_mqtt:
+    url: !secret proxmox_api_url_mqtt_status
+    method: GET
+    headers:
+      Authorization: !secret proxmox_api_token
+    verify_ssl: false
+  proxmox_stop_mqtt:
+    url: !secret proxmox_api_url_mqtt_stop
+    method: POST
+    headers:
+      Authorization: !secret proxmox_api_token
+    verify_ssl: false
+  proxmox_start_mqtt:
+    url: !secret proxmox_api_url_mqtt_start
+    method: POST
+    headers:
+      Authorization: !secret proxmox_api_token
+    verify_ssl: false
+
 # =============================================================================
 # Devices & Services
 # Climate control, Apple HomeKit bridge, and notifications
