@@ -1,0 +1,51 @@
+# =============================================================================
+# Input Numbers
+# Adjustable numeric values used by automations and templates.
+#
+# "Slots needed" helpers define how many consecutive NordPool hourly slots an
+# appliance needs.  The appliance-scheduling templates (templates/appliances.yaml)
+# use these values to find the cheapest contiguous time window.
+# =============================================================================
+
+# --- Energy slot configuration ---
+slots_needed_washing_machine:
+  name: "Slots Needed Washing Machine"
+  initial: 1
+  min: 0.5
+  max: 5
+  step: 0.5
+  mode: slider
+  unit_of_measurement: "h"
+  icon: mdi:washing-machine
+
+slots_needed_dryer:
+  name: "Slots Needed Dryer"
+  initial: 2
+  min: 0.5
+  max: 5
+  step: 0.5
+  mode: slider
+  unit_of_measurement: "h"
+  icon: mdi:tumble-dryer
+
+slots_needed_dishwasher:
+  name: "Slots Needed Dishwasher"
+  initial: 3.5
+  min: 0.5
+  max: 5
+  step: 0.5
+  mode: slider
+  unit_of_measurement: "h"
+  icon: mdi:dishwasher
+
+# --- Ambient light ---
+ambient_light_sensor_threshold:
+  name: "Ambient Light Sensor Threshold"
+  initial: 45
+  min: 0
+  max: 5000
+  step: 1
+  mode: slider
+  unit_of_measurement: "lx"
+  icon: mdi:brightness-6
+

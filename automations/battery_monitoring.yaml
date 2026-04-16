@@ -1,0 +1,206 @@
+- id: battery_low_warning
+  alias: Batterij waarschuwing (laag)
+  description: Notificeer wanneer een IoT sensor batterij onder 20% zakt (maar boven 10%)
+  triggers:
+  - trigger: numeric_state
+    entity_id:
+    - sensor.light_sensor_living_room_battery
+    - sensor.light_sensor_front_garden_battery
+    - sensor.light_sensor_back_garden_battery
+    - sensor.living_room_back_battery
+    - sensor.living_room_front_battery
+    - sensor.bedroom_scott_battery
+    - sensor.dining_room_battery
+    - sensor.trv_living_room_front_battery
+    - sensor.trv_living_room_back_battery
+    - sensor.trv_dining_room_battery
+    - sensor.trv_bedroom_battery
+    - sensor.basement_water_battery
+    - sensor.filament_drybox_battery
+    - sensor.freddy_battery
+    - sensor.flip_battery
+    - sensor.aqara_battery
+    - sensor.bedroom_battery
+    - sensor.xsense_dining_room_battery
+    - sensor.kitchen_battery_2
+    - sensor.downstairs_battery
+    - sensor.attic_battery
+    - sensor.scotts_bedroom_battery
+    - sensor.upstairs_battery
+    below: 20
+  conditions:
+  - condition: template
+    value_template: "{{ (as_timestamp(now()) - as_timestamp(states('sensor.uptime'))) > 1200 }}"
+  - condition: template
+    value_template: "{{ trigger.to_state.state | float(-1) > 10 }}"
+  actions:
+  - action: notify.steven
+    data:
+      message: >-
+        Batterij bijna leeg: {{ trigger.to_state.name }}
+        ({{ trigger.to_state.state }}%)
+  mode: single
+
+- id: battery_critical
+  alias: Batterij kritiek (onder 10%)
+  description: Urgente notificatie wanneer een IoT sensor batterij onder 10% zakt
+  triggers:
+  - trigger: numeric_state
+    entity_id:
+    - sensor.light_sensor_living_room_battery
+    - sensor.light_sensor_front_garden_battery
+    - sensor.light_sensor_back_garden_battery
+    - sensor.living_room_back_battery
+    - sensor.living_room_front_battery
+    - sensor.bedroom_scott_battery
+    - sensor.dining_room_battery
+    - sensor.trv_living_room_front_battery
+    - sensor.trv_living_room_back_battery
+    - sensor.trv_dining_room_battery
+    - sensor.trv_bedroom_battery
+    - sensor.basement_water_battery
+    - sensor.filament_drybox_battery
+    - sensor.freddy_battery
+    - sensor.flip_battery
+    - sensor.aqara_battery
+    - sensor.bedroom_battery
+    - sensor.xsense_dining_room_battery
+    - sensor.kitchen_battery_2
+    - sensor.downstairs_battery
+    - sensor.attic_battery
+    - sensor.scotts_bedroom_battery
+    - sensor.upstairs_battery
+    below: 10
+  conditions:
+  - condition: template
+    value_template: "{{ (as_timestamp(now()) - as_timestamp(states('sensor.uptime'))) > 1200 }}"
+  actions:
+  - action: notify.steven
+    data:
+      message: >-
+        ⚠️ Batterij KRITIEK: {{ trigger.to_state.name }}
+        ({{ trigger.to_state.state }}%) — vervang zo snel mogelijk!
+  mode: single
+
+- id: battery_daily_summary
+  alias: Dagelijkse batterij samenvatting
+  description: Dagelijkse herinnering om 09:00 voor sensoren met lage batterij
+  triggers:
+  - trigger: time
+    at: '09:00:00'
+  conditions:
+  - condition: template
+    value_template: >-
+      {% set sensors = [
+        'sensor.light_sensor_living_room_battery',
+        'sensor.light_sensor_front_garden_battery',
+        'sensor.light_sensor_back_garden_battery',
+        'sensor.living_room_back_battery',
+        'sensor.living_room_front_battery',
+        'sensor.bedroom_scott_battery',
+        'sensor.dining_room_battery',
+        'sensor.trv_living_room_front_battery',
+        'sensor.trv_living_room_back_battery',
+        'sensor.trv_dining_room_battery',
+        'sensor.trv_bedroom_battery',
+        'sensor.basement_water_battery',
+        'sensor.filament_drybox_battery',
+        'sensor.freddy_battery',
+        'sensor.flip_battery',
+        'sensor.aqara_battery',
+        'sensor.bedroom_battery',
+        'sensor.xsense_dining_room_battery',
+        'sensor.kitchen_battery_2',
+        'sensor.downstairs_battery',
+        'sensor.attic_battery',
+        'sensor.scotts_bedroom_battery',
+        'sensor.upstairs_battery'
+      ] %}
+      {% set ns = namespace(found=false) %}
+      {% for s in sensors %}
+        {% set val = states(s) | float(-1) %}
+        {% if val >= 0 and val < 20 %}{% set ns.found = true %}{% endif %}
+      {% endfor %}
+      {{ ns.found }}
+  actions:
+  - action: notify.steven
+    data:
+      message: >-
+        {% set sensors = [
+          'sensor.light_sensor_living_room_battery',
+          'sensor.light_sensor_front_garden_battery',
+          'sensor.light_sensor_back_garden_battery',
+          'sensor.living_room_back_battery',
+          'sensor.living_room_front_battery',
+          'sensor.bedroom_scott_battery',
+          'sensor.dining_room_battery',
+          'sensor.trv_living_room_front_battery',
+          'sensor.trv_living_room_back_battery',
+          'sensor.trv_dining_room_battery',
+          'sensor.trv_bedroom_battery',
+          'sensor.basement_water_battery',
+          'sensor.filament_drybox_battery',
+          'sensor.freddy_battery',
+          'sensor.flip_battery',
+          'sensor.aqara_battery',
+          'sensor.bedroom_battery',
+          'sensor.xsense_dining_room_battery',
+          'sensor.kitchen_battery_2',
+          'sensor.downstairs_battery',
+          'sensor.attic_battery',
+          'sensor.scotts_bedroom_battery',
+          'sensor.upstairs_battery'
+        ] %}
+        {% set low = namespace(items=[]) %}
+        {% for s in sensors %}
+          {% set val = states(s) | float(-1) %}
+          {% if val >= 0 and val < 20 %}
+            {% set low.items = low.items + [state_attr(s, 'friendly_name') ~ ' (' ~ val | int ~ '%)'] %}
+          {% endif %}
+        {% endfor %}
+        Sensoren met lage batterij: {{ low.items | join(', ') }}
+  mode: single
+
+- id: battery_rapid_drop
+  alias: Snelle batterijdaling detectie
+  description: Waarschuw bij een daling van 20% of meer in één state change
+  triggers:
+  - trigger: state
+    entity_id:
+    - sensor.light_sensor_living_room_battery
+    - sensor.light_sensor_front_garden_battery
+    - sensor.light_sensor_back_garden_battery
+    - sensor.living_room_back_battery
+    - sensor.living_room_front_battery
+    - sensor.bedroom_scott_battery
+    - sensor.dining_room_battery
+    - sensor.trv_living_room_front_battery
+    - sensor.trv_living_room_back_battery
+    - sensor.trv_dining_room_battery
+    - sensor.trv_bedroom_battery
+    - sensor.basement_water_battery
+    - sensor.filament_drybox_battery
+    - sensor.freddy_battery
+    - sensor.flip_battery
+    - sensor.aqara_battery
+    - sensor.bedroom_battery
+    - sensor.xsense_dining_room_battery
+    - sensor.kitchen_battery_2
+    - sensor.downstairs_battery
+    - sensor.attic_battery
+    - sensor.scotts_bedroom_battery
+    - sensor.upstairs_battery
+  conditions:
+  - condition: template
+    value_template: >-
+      {% set from = trigger.from_state.state | float(-1) %}
+      {% set to = trigger.to_state.state | float(-1) %}
+      {{ from > 0 and to > 0 and (from - to) >= 20 }}
+  actions:
+  - action: notify.steven
+    data:
+      message: >-
+        Snelle batterijdaling: {{ trigger.to_state.name }}
+        van {{ trigger.from_state.state | float | int }}%
+        naar {{ trigger.to_state.state | float | int }}%
+  mode: parallel

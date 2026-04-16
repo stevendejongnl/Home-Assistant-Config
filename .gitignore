@@ -1,7 +1,77 @@
-.idea
-*.log
-log*.txt
+# Secrets
+.jwt_secret
+
+# Databases
 *.db
-.storeage
-zigbee2mqtt
+*.db-shm
+*.db-wal
+
+# Logs
+*.log
+*.log.*
+
+# Home Assistant runtime/state
+.HA_VERSION
+.ha_run.lock
+.storage/*
+# Track Lovelace dashboards
+!.storage/lovelace.lovelace
+!.storage/lovelace_dashboards
+!.storage/lovelace_resources
+!.storage/lovelace.dashboard_*
+.cloud/
+.exports
+.timeline
+.vacuum
+
+# HACS managed (re-downloaded automatically)
+custom_components/
+www/community/
+
+# Frontend components (managed by HA/HACS)
+www/lovelace-*/
+www/mini-graph-card/
+www/icloud3/
+www/vertical-stack-in-card.js
+
+# Snapshots
+www/snapshots/
+
+# Dependencies & caches
+deps/
+model_cache/
+tts/
+__pycache__/
+
+# Zigbee2mqtt (has its own database/state)
+zigbee2mqtt/
+
+# Binaries
+go2rtc-*
+
+# IDE
+.idea/
+
+# Other generated/runtime files
+html5_push_registrations.conf
+
+# Claude Code
+.claude/
+.claudecode/
+
+# Sensitive files (never commit)
+.git-credentials
+.ha-token
 secrets.yaml
+
+# Auto-generated backups
+*.bak
+
+# Runtime cache
+.cache/
+
+# Playwright screenshots
+.playwright-mcp/
+
+# Switch Manager (HACS-managed)
+blueprints/switch_manager/

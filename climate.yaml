@@ -1,0 +1,37 @@
+# =============================================================================
+# Climate Groups
+# Virtual thermostats that control multiple TRV radiators together.
+# Uses the climate_group custom integration.
+# =============================================================================
+
+# All radiators in the house
+- platform: climate_group
+  name: "All radiators"
+  temperature_unit: C
+  entities:
+    - climate.trv_better_living_front
+    - climate.trv_better_living_back
+    - climate.trv_better_kitchen
+    - climate.trv_better_dining_room
+    - climate.trv_better_bedroom
+    - climate.trv_better_bedroom_scott
+    - climate.trv_better_bedroom_marlou
+
+# Ground floor radiators only
+- platform: climate_group
+  name: "Downstairs radiators"
+  temperature_unit: C
+  entities:
+    - climate.trv_better_living_front
+    - climate.trv_better_living_back
+    - climate.trv_better_kitchen
+    - climate.trv_better_dining_room
+
+# First floor radiators only
+- platform: climate_group
+  name: "Upstairs radiators"
+  temperature_unit: C
+  entities:
+    - climate.trv_better_bedroom
+    - climate.trv_better_bedroom_scott
+    - climate.trv_better_bedroom_marlou

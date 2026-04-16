@@ -1,0 +1,32 @@
+esphome:
+  name: stevens-nightlamp
+  friendly_name: Stevens Nightlamp
+
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: "+woHzX3UHMhd1UGJ4AqKK6ylyjO+ctu8+6VTc8vgH8Q="
+
+ota:
+  - platform: esphome
+    password: "491f645502b0a84ad4b646bcc6234fcf"
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Stevens-Nightlamp"
+    password: "gMrLAZISCE06"
+
+captive_portal:
+    

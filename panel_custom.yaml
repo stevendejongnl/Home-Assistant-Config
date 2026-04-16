@@ -1,0 +1,59 @@
+# =============================================================================
+# Custom Sidebar Panels
+# Shortcuts to built-in configuration pages exposed as top-level sidebar items.
+# =============================================================================
+
+# Devices overview
+- name: panel_devices
+  sidebar_title: Devices
+  sidebar_icon: mdi:devices
+  js_url: /api/hassio/app/entrypoint.js
+  url_path: "config/devices"
+  embed_iframe: true
+  require_admin: true
+  config:
+    ingress: core_configurator
+
+# Automations list
+- name: panel_automations
+  sidebar_title: Automations
+  sidebar_icon: mdi:robot
+  js_url: /api/hassio/app/entrypoint.js
+  url_path: "config/automation"
+  embed_iframe: true
+  require_admin: true
+  config:
+    ingress: core_configurator
+
+# Scripts list
+- name: panel_scripts
+  sidebar_title: Scripts
+  sidebar_icon: mdi:script-text
+  js_url: /api/hassio/app/entrypoint.js
+  url_path: "config/script"
+  embed_iframe: true
+  require_admin: true
+  config:
+    ingress: core_configurator
+
+# Integrations management
+- name: panel_integrations
+  sidebar_title: Integrations
+  sidebar_icon: mdi:application-cog
+  js_url: /api/hassio/app/entrypoint.js
+  url_path: "config/integrations"
+  embed_iframe: true
+  require_admin: true
+  config:
+    ingress: core_configurator
+
+# System log viewer
+- name: panel_logs
+  sidebar_title: System Logs
+  sidebar_icon: mdi:format-list-group
+  js_url: /api/hassio/app/entrypoint.js
+  url_path: "config/logs"
+  embed_iframe: true
+  require_admin: true
+  config:
+    ingress: core_configurator

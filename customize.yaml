@@ -1,0 +1,32 @@
+# =============================================================================
+# Entity Picture Overrides
+# Custom entity_picture for vehicle tracker and waste-collection sensors.
+# =============================================================================
+
+# --- Vehicle ---
+device_tracker.ford_fiesta:
+  entity_picture: /local/ford-fiesta.jpg
+
+# --- Waste collection (afvalinfo) ---
+sensor.afvalinfo_home_gft:
+  entity_picture: /local/images/afvalinfo/icons/gft-icon.png
+
+sensor.afvalinfo_home_restafval:
+  entity_picture: /local/images/afvalinfo/icons/restafval-icon.png
+
+# NOTE: Entity ID uses "pbd" but the icon file is "pmd-icon.png".
+# Both refer to the same waste type (Plastic, Metaal & Drankkartons).
+sensor.afvalinfo_home_pbd:
+  entity_picture: /local/images/afvalinfo/icons/pmd-icon.png
+
+sensor.afvalinfo_home_papier:
+  entity_picture: /local/images/afvalinfo/icons/papier-icon.png
+
+sensor.afvalinfo_home_textiel:
+  entity_picture: /local/images/afvalinfo/icons/textiel-icon.png
+
+sensor.afvalinfo_home_kerstboom:
+  entity_picture: /local/images/afvalinfo/icons/kerstboom-icon.png
+
+sensor.afvalinfo_home_takken:
+  entity_picture: /local/images/afvalinfo/icons/takken-icon.png

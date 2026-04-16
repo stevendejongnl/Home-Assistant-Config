@@ -1,0 +1,75 @@
+# =============================================================================
+# Samsung Oven Automations
+# Notifications and clock sync for the Samsung SmartThings oven.
+# Device ID: d7182718-47a4-ae9b-4187-9d64f021ecd3
+# =============================================================================
+
+- id: oven_preheat_complete
+  alias: "Oven: Preheat complete"
+  description: "Notify when the oven finishes preheating and is ready for food"
+  trigger:
+    - trigger: state
+      entity_id: sensor.oven_job_state
+      to: "ready"
+  condition:
+    - condition: state
+      entity_id: sensor.oven_machine_state
+      state: "running"
+  action:
+    - action: notify.family
+      data:
+        message: "Oven is preheated and ready! 🔥"
+  mode: single
+
+- id: oven_cooking_done
+  alias: "Oven: Cooking done"
+  description: "Notify when the oven finishes cooking"
+  trigger:
+    - trigger: state
+      entity_id: sensor.oven_job_state
+      to: "finished"
+  action:
+    - action: notify.family
+      data:
+        message: "Cooking is done! Don't forget to check the oven."
+  mode: single
+
+- id: oven_door_left_open
+  alias: "Oven: Door left open"
+  description: "Notify if the oven door stays open while the oven is hot or running"
+  trigger:
+    - trigger: state
+      entity_id: binary_sensor.oven_door
+      to: "on"
+      for:
+        minutes: 5
+  condition:
+    - condition: or
+      conditions:
+        - condition: state
+          entity_id: sensor.oven_machine_state
+          state: "running"
+        - condition: numeric_state
+          entity_id: sensor.oven_temperature
+          above: 50
+  action:
+    - action: notify.family
+      data:
+        message: "⚠️ Oven door has been open for 5 minutes!"
+  mode: single
+
+- id: oven_sync_time
+  alias: "Oven: Sync clock"
+  description: "Sync oven clock daily and on HA start to prevent time drift"
+  trigger:
+    - trigger: homeassistant
+      event: start
+    - trigger: time
+      at: "02:00:00"
+  condition:
+    - condition: state
+      entity_id: sensor.oven_machine_state
+      state: "ready"
+  action:
+    - action: rest_command.oven_sync_time
+  mode: single

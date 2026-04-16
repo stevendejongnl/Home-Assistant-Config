@@ -1,0 +1,21 @@
+- binary_sensor:
+    - name: Display settings
+      unique_id: 1b3a3dae-fd0c-4f47-9c8b-5b680478a977 # https://www.uuidgenerator.net/
+      state: "{{ now() }}"
+      attributes:
+        update_automation: "automation.update_display_data" # add a the automation entity_id from step 3 before
+        update_time: "80" # sending the config via mqtt needs some time to complete. This stops the automation from re.run before sending config is finished
+        display_w: "480"
+        display_h: "480"
+        grid_cols: "12" # increase for more resolution of object
+        grid_rows: "12" # increase for more resolution of object
+        grid_gutter: "8" # This looked nice for me
+        grid_margin: "4" # This looked nice for me
+        bg_color: "#000000"
+        primary_color: "#4193d5"
+        secondary_color: "#ee9f52"
+        accent_color: "#A175C4"
+        success_color: "#6cbe58"
+        warning_color: "#d67430"
+        error_color: "#e25628"
+        radius: "4"

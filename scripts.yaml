@@ -1,27 +1,651 @@
-flip_smallroomclean:
-  alias: Flip_smallRoomClean
+freddy_clean_living_room:
+  alias: 'Freddy: Clean Living Room'
+  icon: mdi:sofa
   sequence:
-    - service: vacuum.send_command
-      data:
-        command: smallRoomClean
-      target:
-        entity_id: vacuum.flip
+  - action: script.freddy_room_clean
+    data:
+      room_ids:
+      - '{{ states(''input_number.freddy_room_id_living_room'') | int }}'
   mode: single
-
-flip_edgeclean:
-  alias: Flip_edgeClean
+freddy_clean_hallway:
+  alias: 'Freddy: Clean Hallway'
+  icon: mdi:door
   sequence:
-    - service: vacuum.send_command
-      data:
-        command: edgeClean
-      target:
-        entity_id: vacuum.flip
+  - action: script.freddy_room_clean
+    data:
+      room_ids:
+      - '{{ states(''input_number.freddy_room_id_hallway'') | int }}'
   mode: single
-
-flip_dock:
-  alias: Flip_dock
+freddy_clean_kitchen:
+  alias: 'Freddy: Clean Kitchen'
+  icon: mdi:countertop
   sequence:
-    - service: vacuum.return_to_base
+  - action: script.freddy_room_clean
+    data:
+      room_ids:
+      - '{{ states(''input_number.freddy_room_id_kitchen'') | int }}'
+  mode: single
+freddy_clean_dining_room:
+  alias: 'Freddy: Clean Dining Room'
+  icon: mdi:table-furniture
+  sequence:
+  - action: script.freddy_room_clean
+    data:
+      room_ids:
+      - '{{ states(''input_number.freddy_room_id_dining_room'') | int }}'
+  mode: single
+freddy_clean_kitchen_living_dining:
+  alias: 'Freddy: Clean Kitchen + Living Room + Dining Room'
+  icon: mdi:home
+  sequence:
+  - action: script.freddy_room_clean
+    data:
+      room_ids:
+      - '{{ states(''input_number.freddy_room_id_kitchen'') | int }}'
+      - '{{ states(''input_number.freddy_room_id_living_room'') | int }}'
+      - '{{ states(''input_number.freddy_room_id_dining_room'') | int }}'
+  mode: single
+freddy_room_clean:
+  alias: 'Freddy: Room Clean'
+  icon: mdi:robot-vacuum
+  fields:
+    room_ids:
+      description: List of room IDs to clean. Use input_number helpers for values.
+      example: '[0, 2, 1]'
+  sequence:
+  - if:
+    - condition: state
+      entity_id: vacuum.freddy
+      state: cleaning
+    then:
+    - action: vacuum.stop
       target:
-        entity_id: vacuum.flip
+        entity_id: vacuum.freddy
+    - delay:
+        seconds: 5
+  - wait_template: '{{ not is_state(''vacuum.freddy'', ''unavailable'') }}'
+    timeout:
+      seconds: 30
+    continue_on_timeout: true
+  - repeat:
+      while:
+      - condition: not
+        conditions:
+        - condition: state
+          entity_id: vacuum.freddy
+          state: cleaning
+      - condition: template
+        value_template: '{{ repeat.index <= 3 }}'
+      sequence:
+      - action: vacuum.send_command
+        target:
+          entity_id: vacuum.freddy
+        data:
+          command: room_clean
+          params:
+            room_ids: '{{ room_ids }}'
+            count: 1
+      - delay:
+          seconds: 15
+  - if:
+    - condition: not
+      conditions:
+      - condition: state
+        entity_id: vacuum.freddy
+        state: cleaning
+    then:
+    - action: notify.steven
+      data:
+        title: Freddy ⚠️
+        message: Couldn't start cleaning. In cooldown — retrying in 5 minutes.
+    - delay:
+        minutes: 5
+    - action: vacuum.send_command
+      target:
+        entity_id: vacuum.freddy
+      data:
+        command: room_clean
+        params:
+          room_ids: '{{ room_ids }}'
+          count: 1
+    - delay:
+        seconds: 10
+    - if:
+      - condition: not
+        conditions:
+        - condition: state
+          entity_id: vacuum.freddy
+          state: cleaning
+      then:
+      - action: vacuum.start
+        target:
+          entity_id: vacuum.freddy
+      - delay:
+          seconds: 15
+      - action: vacuum.return_to_base
+        target:
+          entity_id: vacuum.freddy
+      - delay:
+          minutes: 1
+      - action: vacuum.send_command
+        target:
+          entity_id: vacuum.freddy
+        data:
+          command: room_clean
+          params:
+            room_ids: '{{ room_ids }}'
+            count: 1
+      - delay:
+          seconds: 15
+      - if:
+        - condition: not
+          conditions:
+          - condition: state
+            entity_id: vacuum.freddy
+            state: cleaning
+        then:
+        - action: notify.steven
+          data:
+            title: Freddy ❌
+            message: Kon niet starten na alle pogingen, inclusief herstart. Controleer
+              Freddy handmatig.
+        - action: notify.anja
+          data:
+            title: Freddy ❌
+            message: Freddy kon niet starten na alle pogingen. Controleer handmatig.
+  mode: single
+freddy_revalidate_room:
+  alias: 'Freddy: Revalidate Room ID'
+  icon: mdi:map-marker-check
+  fields:
+    room_name:
+      description: Room to revalidate
+      selector:
+        select:
+          options:
+          - label: Kitchen
+            value: kitchen
+          - label: Living Room
+            value: living_room
+          - label: Hallway
+            value: hallway
+          - label: Dining Room
+            value: dining_room
+    _scanning:
+      description: 'Internal: true when scanning IDs sequentially from 0'
+      default: false
+  sequence:
+  - variables:
+      room_id: '{{ states(''input_number.freddy_room_id_'' + room_name) | int }}'
+      room_label: "{{ {'kitchen': 'Kitchen', 'living_room': 'Living Room',\n    'hallway':
+        'Hallway', 'dining_room': 'Dining Room'}[room_name] }}\n"
+  - if:
+    - condition: template
+      value_template: '{{ room_id > 10 }}'
+    then:
+    - action: notify.steven
+      data:
+        title: Freddy Give Up
+        message: Tried IDs 0–10 for {{ room_label }}, none triggered movement. Reset
+          helper manually.
+    - stop: Exceeded ID scan range
+  - action: vacuum.send_command
+    target:
+      entity_id: vacuum.freddy
+    data:
+      command: room_clean
+      params:
+        room_ids: '{{ [room_id] }}'
+        count: 1
+  - wait_template: '{{ not is_state(''vacuum.freddy'', ''docked'') and not is_state(''vacuum.freddy'',
+      ''idle'') }}'
+    timeout:
+      seconds: 20
+    continue_on_timeout: true
+  - if:
+    - condition: template
+      value_template: '{{ not wait.completed }}'
+    then:
+    - action: input_number.set_value
+      target:
+        entity_id: input_number.freddy_room_id_{{ room_name }}
+      data:
+        value: '{{ room_id + 1 if _scanning | default(false) else 0 }}'
+    - action: script.freddy_revalidate_room
+      data:
+        room_name: '{{ room_name }}'
+        _scanning: true
+    - stop: ID {{ room_id }} was phantom, retrying from {{ room_id + 1 if _scanning
+        | default(false) else 0 }}
+  - delay:
+      minutes: 2
+      seconds: 10
+  - action: vacuum.pause
+    target:
+      entity_id: vacuum.freddy
+  - action: notify.steven
+    data:
+      title: Freddy Room Check
+      message: 'Sent Freddy to {{ room_label }} (ID {{ room_id }}). Which room is
+        it actually in?
+
+        '
+      data:
+        tag: freddy_room_validate
+        persistent: true
+        actions:
+        - action: FREDDY_VAL_KITCHEN
+          title: Kitchen
+        - action: FREDDY_VAL_LIVING_ROOM
+          title: Living Room
+        - action: FREDDY_VAL_HALLWAY
+          title: Hallway
+        - action: FREDDY_VAL_DINING_ROOM
+          title: Dining Room
+  - wait_for_trigger:
+    - platform: event
+      event_type: mobile_app_notification_action
+      event_data:
+        action: FREDDY_VAL_KITCHEN
+    - platform: event
+      event_type: mobile_app_notification_action
+      event_data:
+        action: FREDDY_VAL_LIVING_ROOM
+    - platform: event
+      event_type: mobile_app_notification_action
+      event_data:
+        action: FREDDY_VAL_HALLWAY
+    - platform: event
+      event_type: mobile_app_notification_action
+      event_data:
+        action: FREDDY_VAL_DINING_ROOM
+    timeout:
+      minutes: 30
+    continue_on_timeout: true
+  - if:
+    - condition: template
+      value_template: '{{ wait.completed }}'
+    then:
+    - variables:
+        action_map:
+          FREDDY_VAL_KITCHEN:
+            key: kitchen
+            label: Kitchen
+          FREDDY_VAL_LIVING_ROOM:
+            key: living_room
+            label: Living Room
+          FREDDY_VAL_HALLWAY:
+            key: hallway
+            label: Hallway
+          FREDDY_VAL_DINING_ROOM:
+            key: dining_room
+            label: Dining Room
+        confirmed: '{{ action_map[wait.trigger.event.data.action] }}'
+    - action: input_number.set_value
+      target:
+        entity_id: input_number.freddy_room_id_{{ confirmed.key }}
+      data:
+        value: '{{ room_id }}'
+    - action: notify.steven
+      data:
+        title: Freddy Mapped
+        message: '{{ confirmed.label }} = ID {{ room_id }}. Helper updated.'
+    else:
+    - action: notify.steven
+      data:
+        title: Freddy Timed Out
+        message: No answer for {{ room_label }} after 30 min. Mapping unchanged.
+  - action: vacuum.return_to_base
+    target:
+      entity_id: vacuum.freddy
+  mode: queued
+  max: 5
+play_radio:
+  alias: Play Radio
+  icon: mdi:radio
+  mode: single
+  fields:
+    station:
+      description: Radio station to play
+      required: true
+      selector:
+        select:
+          options:
+          - label: Q-music
+            value: qmusic
+          - label: Q-music Non-Stop
+            value: qmusic_nonstop
+          - label: Radio 538
+            value: radio_538
+          - label: Radio 538 Non-Stop
+            value: radio_538_nonstop
+          - label: SLAM!
+            value: slam
+          - label: SLAM! Non-Stop
+            value: slam_nonstop
+    target_players:
+      description: 'List of Volumio media player entities (default: both rooms)'
+      example: '[media_player.living_room, media_player.dining_room]'
+      selector:
+        entity:
+          domain: media_player
+          multiple: true
+  sequence:
+  - variables:
+      stations:
+        qmusic:
+          stream_url: http://opml.radiotime.com/Tune.ashx?id=s87683
+          title: Qmusic
+          thumbnail: /local/radio/qmusic.png
+        qmusic_nonstop:
+          stream_url: http://opml.radiotime.com/Tune.ashx?id=s210431
+          title: Qmusic Nonstop
+          thumbnail: /local/radio/qmusic-nonstop.png
+        radio_538:
+          stream_url: http://opml.radiotime.com/Tune.ashx?id=s346477
+          title: Radio 538 Netherland
+          thumbnail: /local/radio/538.png
+        radio_538_nonstop:
+          stream_url: http://opml.radiotime.com/Tune.ashx?id=s252020
+          title: 538 Non-Stop
+          thumbnail: /local/radio/538-nonstop.png
+        slam:
+          stream_url: http://opml.radiotime.com/Tune.ashx?id=s67814
+          title: SLAM!
+          thumbnail: /local/radio/slam.png
+        slam_nonstop:
+          stream_url: http://opml.radiotime.com/Tune.ashx?id=s253879
+          title: SLAM! Non Stop
+          thumbnail: /local/radio/slam-nonstop.png
+      players: "{{ target_players if target_players is defined and target_players\n
+        \  else ['media_player.living_room', 'media_player.dining_room'] }}\n"
+      info: '{{ stations[station] }}'
+  - action: media_player.play_media
+    target:
+      entity_id: '{{ players }}'
+    data:
+      media_content_id: '{"service": "webradio", "type": "webradio", "title": "{{
+        info.title }}", "artist": "", "albumart": "", "uri": "{{ info.stream_url }}"}'
+      media_content_type: music
+play_radio_qmusic:
+  alias: 'Radio: Q-music'
+  icon: mdi:radio
+  sequence:
+  - action: script.play_radio
+    data:
+      station: qmusic
+  mode: single
+play_radio_qmusic_nonstop:
+  alias: 'Radio: Q-music Non-Stop'
+  icon: mdi:radio
+  sequence:
+  - action: script.play_radio
+    data:
+      station: qmusic_nonstop
+  mode: single
+play_radio_538:
+  alias: 'Radio: 538'
+  icon: mdi:radio
+  sequence:
+  - action: script.play_radio
+    data:
+      station: radio_538
+  mode: single
+play_radio_538_nonstop:
+  alias: 'Radio: 538 Non-Stop'
+  icon: mdi:radio
+  sequence:
+  - action: script.play_radio
+    data:
+      station: radio_538_nonstop
+  mode: single
+play_radio_slam:
+  alias: 'Radio: SLAM!'
+  icon: mdi:radio
+  sequence:
+  - action: script.play_radio
+    data:
+      station: slam
+  mode: single
+play_radio_slam_nonstop:
+  alias: 'Radio: SLAM! Non-Stop'
+  icon: mdi:radio
+  sequence:
+  - action: script.play_radio
+    data:
+      station: slam_nonstop
+  mode: single
+toggle_scott_door_alarm:
+  alias: Toggle Scott door alarm
+  sequence:
+  - action: input_boolean.turn_on
+    target:
+      entity_id: input_boolean.reset_bedroom_scott_delay
+  - if:
+    - condition: state
+      entity_id: input_boolean.bedroom_scott_alarm_mute
+      state:
+      - 'on'
+    then:
+    - action: input_boolean.turn_off
+      target:
+        entity_id: input_boolean.bedroom_scott_alarm_mute
+    - action: notify.steven
+      data:
+        message: Alarm activated
+        title: Bedroom Scott
+    else:
+    - action: input_boolean.turn_on
+      target:
+        entity_id: input_boolean.bedroom_scott_alarm_mute
+    - action: notify.steven
+      data:
+        message: Alarm muted
+        title: Bedroom Scott
+  mode: single
+bedroom_scott_notify_wait:
+  alias: Bedroom Scott notify + wait
+  sequence:
+  - if:
+    - condition: or
+      conditions:
+      - alias: Check night hours
+        condition: or
+        conditions:
+        - condition: and
+          conditions:
+          - condition: time
+            after: input_datetime.bedroom_scott_alarm_night_start
+          - condition: time
+            before: '23:59:59'
+          alias: Check alarm evening
+        - condition: and
+          conditions:
+          - condition: time
+            after: 00:00:00
+          - condition: time
+            before: input_datetime.bedroom_scott_alarm_night_end
+          alias: Check alarm night
+      - condition: and
+        conditions:
+        - condition: time
+          weekday:
+          - wed
+          - fri
+          - sat
+          - sun
+        - condition: time
+          after: input_datetime.bedroom_scott_alarm_day_start
+        - condition: time
+          before: input_datetime.bedroom_scott_alarm_day_end
+        alias: Check afternoon on specific days
+    then:
+    - data:
+        filename: /config/www/snapshots/bedroom_scott_last_person.jpg
+      target:
+        entity_id: image.scott02_person
+      action: image.snapshot
+    - if:
+      - condition: state
+        entity_id: person.steven_de_jong
+        state: home
+      then:
+      - data:
+          title: Bedroom Scott
+          message: The door is open!
+          data:
+            image: https://ha.madebysteven.nl/local/snapshots/bedroom_scott_last_person.jpg?v={{
+              ((state_attr('automation.bedroom_scott_door_notify_toggle', 'last_triggered')
+              or now()) | as_datetime).timestamp() | int }}
+            push:
+              interruption-level: critical
+        action: notify.steven
+    - if:
+      - condition: state
+        entity_id: person.anja
+        state: home
+      then:
+      - data:
+          title: Bedroom Scott
+          message: The door is open!
+          data:
+            image: https://ha.madebysteven.nl/local/snapshots/bedroom_scott_last_person.jpg?v={{
+              ((state_attr('automation.bedroom_scott_door_notify_toggle', 'last_triggered')
+              or now()) | as_datetime).timestamp() | int }}
+            push:
+              interruption-level: '{{ ''critical'' if states(''person.steven_de_jong'')
+                != ''home'' else ''active'' }}'
+        action: notify.anja
+  - delay:
+      hours: 0
+      minutes: 5
+      seconds: 0
+      milliseconds: 0
+  - action: input_boolean.turn_off
+    target:
+      entity_id: input_boolean.bedroom_scott_door_alarm
+  mode: single
+send_todo_notification:
+  alias: Send Todo Notification
+  sequence:
+  - data:
+      title: "\U0001F4CB Daily Todo Reminder"
+      message: '{{ todo_item }}'
+      data:
+        actions:
+        - action: COMPLETE_TODO
+          title: ✓ Mark Complete
+        - action: SKIP_TODO
+          title: Skip
+        tag: todo_{{ todo_item | regex_replace('[^a-zA-Z0-9]', '_') }}
+        data:
+          todo_item: '{{ todo_item }}'
+    action: notify.steven
+  - data:
+      title: "\U0001F4CB Daily Todo Reminder"
+      message: '{{ todo_item }}'
+      data:
+        actions:
+        - action: COMPLETE_TODO
+          title: ✓ Mark Complete
+        - action: SKIP_TODO
+          title: Skip
+        tag: todo_{{ todo_item | regex_replace('[^a-zA-Z0-9]', '_') }}
+        data:
+          todo_item: '{{ todo_item }}'
+    action: notify.anja
+  mode: parallel
+  fields:
+    todo_item:
+      description: The todo item text
+      selector:
+        text:
+add_to_do:
+  alias: Add to-do
+  use_blueprint:
+    path: balloob/add-to-do-item.yaml
+    input:
+      to_do_list: todo.steven_to_do
+  mode: single
+convert_doorbell_snapshot_to_png:
+  alias: Convert doorbell snapshot to png
+  sequence:
+  - action: shell_command.convert_jpg_to_png
+    data:
+      input_path: /config/www/snapshots/doorbell_snapshot.jpg
+      output_path: /config/www/snapshots/doorbell_snapshot.png
+  mode: single
+turn_on_pc:
+  alias: Turn on PC
+  sequence:
+  - type: toggle
+    device_id: a9ab3433007a03d27306369e731104d6
+    entity_id: 9f74b760968129adc824ee8fd3be4773
+    domain: switch
+  mode: single
+restart_woonkamer_speakers:
+  alias: Restart woonkamer speakers
+  icon: mdi:speaker-multiple
+  sequence:
+  - action: shell_command.woonkamer_speakers_restart
+  mode: single
+navigate_to_device_page_for_an_entity:
+  alias: Navigate to device page for an entity
+  fields:
+    entity:
+      description: Entity id to navigate for, e.g. climate.trv_living_room_front
+      example: climate.trv_living_room_front
+  sequence:
+  - variables:
+      device_id: '{{ device_id(entity) }}'
+  - condition: template
+    value_template: '{{ device_id is not none and device_id != '''' }}'
+  - data:
+      path: /config/devices/device/{{ device_id }}
+    action: frontend.navigate
+  mode: single
+set_daily_heating:
+  alias: Set daily heating
+  fields:
+    target_temp:
+      description: Target temperature
+      example: 20
+      selector:
+        number:
+          min: 10
+          max: 25
+          step: 1
+  sequence:
+  - target:
+      entity_id: input_number.heating_daily_target
+    data:
+      value: '{{ target_temp }}'
+    action: input_number.set_value
+  mode: single
+toggle_ambient_lights:
+  alias: Toggle ambient lights
+  sequence:
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: light.ambient_lights
+        state:
+        - 'on'
+      sequence:
+      - action: light.turn_off
+        target:
+          entity_id:
+          - light.ambient_lights
+          - light.shellyplus1pm_hallway_downstairs
+    - conditions:
+      - condition: state
+        entity_id: light.ambient_lights
+        state:
+        - 'off'
+      sequence:
+      - action: light.turn_on
+        target:
+          entity_id:
+          - light.ambient_lights
+          - light.shellyplus1pm_hallway_downstairs
   mode: single

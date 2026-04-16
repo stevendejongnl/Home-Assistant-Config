@@ -1,0 +1,27 @@
+# switch:
+#   - name: "Living room light front"
+#     state_topic: "hasp/living_room/state/output1"
+#     command_topic: "hasp/living_room/command/output1"
+#     value_template: "{{ value_json.state }}"
+#     payload_on: '{ "state": "on" }'
+#     payload_off: '{ "state": "off" }'
+#     state_on: "on"
+#     state_off: "off"
+
+#   - name: "Living room light back"
+#     state_topic: "hasp/living_room/state/output2"
+#     command_topic: "hasp/living_room/command/output2"
+#     value_template: "{{ value_json.state }}"
+#     payload_on: '{ "state": "on" }'
+#     payload_off: '{ "state": "off" }'
+#     state_on: "on"
+#     state_off: "off"
+
+#   - name: "Relay 3"
+#     state_topic: "hasp/living_room/state/output40"
+#     command_topic: "hasp/living_room/command/output40"
+#     value_template: "{{ value_json.state }}"
+#     payload_on: '{ "state": "on" }'
+#     payload_off: '{ "state": "off" }'
+#     state_on: "on"
+#     state_off: "off"

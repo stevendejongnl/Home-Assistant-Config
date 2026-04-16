@@ -1,0 +1,40 @@
+substitutions:
+  name: stevens-nightlamp
+  friendly_name: Stevens Nightlamp
+
+esphome:
+  name: ${name}
+  name_add_mac_suffix: false
+  friendly_name: ${friendly_name}
+  min_version: 2025.5.0
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+logger:
+
+api:
+
+ota:
+  - platform: esphome
+    password: !secret ota_password
+
+output:
+  - platform: ac_dimmer
+    id: h8d14_dimmer
+    gate_pin: GPIO26
+    zero_cross_pin: GPIO25
+    min_power: 0.1
+    max_power: 0.99
+
+light:
+  - platform: monochromatic
+    name: "Steven's Nightlamp"
+    output: h8d14_dimmer
+    restore_mode: ALWAYS_OFF

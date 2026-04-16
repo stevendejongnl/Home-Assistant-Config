@@ -1,9 +1,18 @@
-dryer_start:
-  has_date: true
+# =============================================================================
+# Input Date/Time Helpers
+# User-configurable timestamps used by automations.
+# =============================================================================
+
+last_ambient_toggle:
+  name: Last Ambient Toggle
   has_time: true
-washing_machine_start:
   has_date: true
+  icon: mdi:clock-outline
+
+bedroom_wake_up:
+  name: Bedroom Wake Up
   has_time: true
-dishwasher_start:
-  has_date: true
-  has_time: true
+  has_date: false
+  initial: "08:15"
+  icon: mdi:alarm
+

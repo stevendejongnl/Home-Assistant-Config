@@ -1,4 +1,22 @@
+# =============================================================================
+# HomeKit Bridge
+# Exposes selected entities to Apple Home via the HomeKit integration.
+# =============================================================================
+
 filter:
   include_entities:
-    - switch.desk
-    - automation.start_flip_delayed
+    - light.ambient_lights                        # Ambient LED lights
+    - light.living_front                          # Living room front light
+    - light.living_back                           # Living room back light
+    - light.kitchen                               # Kitchen light
+    - light.shellyplus1pm_fce8c0fd1230_switch_0   # Shelly Plus 1PM (dining room)
+    - light.shellyplus1pm_hallway_downstairs      # Shelly Plus 1PM (hallway downstairs)
+    - light.shellyplus1pm_hallway_upstairs        # Shelly Plus 1PM (hallway upstairs)
+    - light.bedroom                               # Bedroom light
+    - switch.attic                                # Attic switch
+    - light.shed_outside_light                    # Shed outside light
+    - switch.tv_light                             # TV backlight
+    - switch.living_room_couch_light              # Living room couch light
+    - switch.living_room_film_light               # Living room film light
+    - input_button.night_mode                     # Night mode trigger
+    - switch.living_room_television

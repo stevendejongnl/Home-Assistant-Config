@@ -1,0 +1,20 @@
+# Infrastructure disk monitoring via Proxmox API
+# Polls critical LXC containers for disk usage to warn before they fill up
+
+- platform: rest
+  name: Postgres Container Disk Usage
+  unique_id: postgres_container_disk_usage
+  resource: https://192.168.1.253:8006/api2/json/nodes/pve1/lxc/131/status/current
+  headers:
+    Authorization: !secret proxmox_api_token
+  verify_ssl: false
+  scan_interval: 3600
+  value_template: >-
+    {{ ((value_json.data.disk / value_json.data.maxdisk) * 100) | round(1) }}
+  unit_of_measurement: "%"
+  json_attributes_path: "$.data"
+  json_attributes:
+    - disk
+    - maxdisk
+    - status
+    - name

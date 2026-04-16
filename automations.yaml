@@ -1,19 +1,4235 @@
-- id: '1719947979988'
-  alias: Check MadeBySteven API health
+- id: '1728751167172'
+  alias: Basement moist detection
   description: ''
+  triggers:
+  - type: moist
+    device_id: 4d5427788886a410d78bc0c585721da2
+    entity_id: 2a5bbf10a833c98cfccfd5112003963d
+    domain: binary_sensor
+    trigger: device
+  conditions: []
+  actions:
+  - action: notify.steven
+    metadata: {}
+    data:
+      message: Basement moist detected
+  - action: telegram_bot.send_message
+    metadata: {}
+    data:
+      message: Basement moist detected
+  mode: single
+- id: '1728751182121'
+  alias: Basement water sensor battery
+  description: ''
+  triggers:
+  - type: bat_low
+    device_id: 4d5427788886a410d78bc0c585721da2
+    entity_id: 66432d07338b4ff4703c2506733226ba
+    domain: binary_sensor
+    trigger: device
+  conditions: []
+  actions:
+  - action: notify.steven
+    metadata: {}
+    data:
+      message: Basement water sensor low battery
+  - action: telegram_bot.send_message
+    metadata: {}
+    data:
+      message: Basement water sensor low battery
+  mode: single
+- id: '1728844827518'
+  alias: Night Mode
+  description: ''
+  triggers:
+  - trigger: state
+    entity_id:
+    - input_button.night_mode
+  - trigger: time
+    at: 01:00:00
+  conditions: []
+  actions:
+  - action: input_button.press
+    metadata: {}
+    data: {}
+    target:
+      entity_id:
+      - input_button.turn_off_ambient_lights
+      - input_button.turn_off_room_lights
+  - action: light.turn_off
+    metadata: {}
+    data: {}
+    target:
+      entity_id:
+      - light.attic
+      - light.back_garden
+  - action: switch.turn_off
+    metadata: {}
+    target:
+      entity_id: switch.living_room_television
+    data: {}
+  - action: input_boolean.turn_off
+    metadata: {}
+    data: {}
+    target:
+      entity_id:
+      - input_boolean.front_motion_mute
+      - input_boolean.back_motion_mute
+      - input_boolean.shed_motion_mute
+      - input_boolean.bedroom_scott_alarm_mute
+  mode: single
+- id: '1729631322188'
+  alias: 'Check Home Assistant connection '
+  description: ''
+  triggers:
+  - type: not_connected
+    device_id: d58ce339b459ccfc8e56e4f0ef205ad1
+    entity_id: b48897420fe7a81594c663759d159b75
+    domain: binary_sensor
+    trigger: device
+  conditions: []
+  actions:
+  - action: telegram_bot.send_message
+    metadata: {}
+    data:
+      message: Home assistant seems to be offline
+  mode: single
+- id: '1731272066441'
+  alias: Turn off room lights
+  description: ''
+  triggers:
+  - trigger: state
+    entity_id:
+    - input_button.turn_off_room_lights
+  conditions: []
+  actions:
+  - action: switch.turn_off
+    metadata: {}
+    data: {}
+    target:
+      entity_id:
+      - switch.shellyplus1pm_kitchen_switch_0
+      - switch.living_room_display_switch_1
+      - switch.living_room_display_switch_2
+      - switch.living_room_display_switch_40
+      - switch.shellyplus2pm_bathroom_light
+      - switch.dining_room_switch_0
+      - switch.shellyplus1pm_hallway_downstairs
+      - switch.shellyplus1pm_hallway_upstairs
+      - switch.ceiling_fan_light
+  mode: single
+- id: '1731842927118'
+  alias: Keep starkvind on
+  description: ''
+  triggers:
+  - trigger: state
+    entity_id:
+    - fan.starkvind
+    to: 'off'
+  conditions: []
+  actions:
+  - action: fan.turn_on
+    metadata: {}
+    data: {}
+    target:
+      entity_id: fan.starkvind
+  - action: fan.set_preset_mode
+    metadata: {}
+    data:
+      preset_mode: auto
+    target:
+      entity_id: fan.starkvind
+  mode: single
+- id: '1732089194544'
+  alias: Set theme at startup
+  description: ''
+  triggers:
+  - event: start
+    trigger: homeassistant
+  actions:
+  - data:
+      name: Graphite
+      mode: dark
+    action: frontend.set_theme
+- id: '1733428084139'
+  alias: Mailbox
+  description: ''
+  triggers:
+  - entity_id: binary_sensor.mailbox_occupancy
+    to: 'on'
+    trigger: state
+  conditions:
+  - condition: state
+    entity_id: input_boolean.mailbox_cooldown
+    state: 'off'
+  actions:
+  - data:
+      filename: /config/www/snapshots/mailbox_snapshot1.png
+    action: camera.snapshot
+    target:
+      entity_id: camera.doorbell
+  - data:
+      title: Mailbox
+      message: You’ve probably got mail
+      data:
+        group: front-garden
+        image: https://ha.madebysteven.nl/local/snapshots/mailbox_snapshot1.png?v={{
+          (state_attr('automation.mailbox', 'last_triggered') | as_datetime).timestamp()
+          | int }}
+    action: notify.family
+  - event: MAILBOX_COOLDOWN
+    event_data: {}
+  mode: single
+- id: '1734598089760'
+  alias: Check Plant Moisture Levels
+  description: Check if plants need watering and send a notification if moisture is
+    critically low
+  triggers:
+  - trigger: time
+    at: '10:00:00'
+  - trigger: time
+    at: '20:00:00'
+  actions:
+  - variables:
+      plant_count: '{{ states.sensor | selectattr(''entity_id'', ''match'', ''sensor\.plant\_.+_soil_moisture'')
+        | list | length }}'
+  - repeat:
+      count: '{{ plant_count }}'
+      sequence:
+      - variables:
+          plant: '{% for plant in states.sensor | selectattr(''entity_id'', ''match'',
+            ''sensor\.plant\_.+_soil_moisture'') | list %}{% if loop.index == repeat.index
+            %}{{plant.entity_id | replace(''sensor.plant_'', ''plant.'')  | replace(''_soil_moisture'',
+            '''') }}{% endif %}{% endfor %}'
+          plant_id: '{% for plant in states.sensor | selectattr(''entity_id'', ''match'',
+            ''sensor\.plant\_.+_soil_moisture'') | list %}{% if loop.index == repeat.index
+            %}{{plant.entity_id | replace(''sensor.plant_'', '''')  | replace(''_soil_moisture'',
+            '''') }}{% endif %}{% endfor %}'
+          plant_sensor: '{% for plant in states.sensor | selectattr(''entity_id'',
+            ''match'', ''sensor\.plant\_.+_soil_moisture'') | list %}{% if loop.index
+            == repeat.index %}{{plant.entity_id}}{% endif %}{% endfor %}'
+          plant_name: '{{ state_attr(plant, ''friendly_name'') }}'
+          plant_picture: '{{ state_attr(plant, ''entity_picture'') }}'
+          soil_moisture_sensor: '{{ plant_sensor }}'
+          last_seen_sensor: '{{ soil_moisture_sensor | replace(''_soil_moisture'',
+            ''_last_seen'') }}'
+          min_soil_moisture: number.{{ plant_id }}_min_soil_moisture
+          current_moisture: '{{ states(soil_moisture_sensor) | float(0) }}'
+          min_moisture: '{{ states(min_soil_moisture) | float(0) }}'
+          last_seen_state: '{{ states(last_seen_sensor) }}'
+          sensor_active: '{{ last_seen_state and last_seen_state not in [''unavailable'',
+            ''unknown'', ''None''] }}'
+          hours_since_last_seen: "{% if sensor_active %}\n  {% set ts = (last_seen_state
+            | as_datetime).timestamp() %}\n  {{ ((now().timestamp() - ts) / 3600)
+            | int }}\n{% else %}\n  999\n{% endif %}"
+      - choose:
+        - conditions:
+          - condition: template
+            value_template: '{{ current_moisture < min_moisture and sensor_active
+              and hours_since_last_seen < 2 }}'
+          sequence:
+          - action: notify.steven
+            data:
+              title: '{{ plant_name }}'
+              message: WATER!!!
+              data:
+                image: https://ha.madebysteven.nl{{ plant_picture }}
+        - conditions:
+          - condition: template
+            value_template: '{{ current_moisture < min_moisture and (not sensor_active
+              or hours_since_last_seen >= 2) }}'
+          sequence:
+          - action: notify.steven
+            data:
+              title: '{{ plant_name }} - Battery Low?'
+              message: Sensor not reporting. Check battery!
+              data:
+                image: https://ha.madebysteven.nl{{ plant_picture }}
+- id: '1734699987535'
+  alias: Back garden house event detection
+  description: ''
+  triggers:
+  - trigger: mqtt
+    topic: frigate/events
+    id: frigate-event
+    payload: back_garden_house
+    value_template: '{{ value_json[''after''][''camera''] }}'
+    variables:
+      after_zones: '{{ trigger.payload_json[''after''][''entered_zones''] }}'
+      before_zones: '{{ trigger.payload_json[''before''][''entered_zones''] }}'
+      camera: '{{ trigger.payload_json[''after''][''camera''] }}'
+      id: '{{ trigger.payload_json[''after''][''id''] }}'
+      label: '{{ trigger.payload_json[''after''][''label''] }}'
+      score: '{{ trigger.payload_json[''after''][''score''] }}'
+      time_clip_start: '{{ trigger.payload_json[''after''][''start_time''] - 10.0
+        }}'
+    enabled: true
+  conditions:
+  - condition: or
+    conditions:
+    - condition: template
+      value_template: '{{ trigger.payload_json[''type''] == ''new'' }}'
+      enabled: true
+    - condition: template
+      value_template: '{{ before_zones | length == 0 }}'
+      enabled: true
+    enabled: true
+  - condition: template
+    value_template: '{{ after_zones[0] == "Back_Garden_House" }}'
+    enabled: true
+  - condition: or
+    conditions:
+    - condition: state
+      state: 'off'
+      entity_id: input_boolean.back_motion_mute
+    - condition: state
+      state: unknown
+      entity_id: input_boolean.back_motion_mute
+    - condition: state
+      entity_id: input_boolean.back_motion_mute
+      state: unavailable
+  - condition: state
+    state: 'off'
+    entity_id: input_boolean.back_motion_cooldown
+  - condition: and
+    conditions:
+    - condition: template
+      value_template: '{{ not is_state(''device_tracker.iphone_steven_bluetooth_bermuda_tracker'',
+        ''home'') }}'
+    - condition: time
+      after: '20:00:00'
+      before: 09:00:00
+  actions:
+  - event: BACK_MOTION_COOLDOWN
+    event_data: {}
+  - alias: Set up variables for the actions
+    variables:
+      action_mute_15: '{{ "MUTE_15_" ~ context.id }}'
+      action_mute_60: '{{ "MUTE_60_" ~ context.id }}'
+      action_mute_360: '{{ "MUTE_360_" ~ context.id }}'
+      action_mute_720: '{{ "MUTE_720_" ~ context.id }}'
+  - alias: Download snapshot
+    action: shell_command.download_snapshot
+    data:
+      id: '{{ trigger.payload_json[''after''][''id''] }}'
+    response_variable: download_response
+  - data:
+      title: Back garden house camera
+      message: '{{ label | title }} detected'
+      data:
+        tag: '{{ id }}'
+        group: back-garden-houde
+        image: https://ha.madebysteven.nl/local/snapshots/{{ trigger.payload_json['after']['id']
+          }}.jpg
+        actions:
+        - action: '{{action_mute_15}}'
+          title: Mute for 15 minutes
+        - action: '{{action_mute_60}}'
+          title: Mute for 1 hour
+        - action: '{{action_mute_360}}'
+          title: Mute for 6 hours
+        - action: '{{action_mute_720}}'
+          title: Mute for 12 hours
+    action: notify.security
+    enabled: true
+  - alias: Wait for a response
+    timeout: 00:01:00
+    continue_on_timeout: false
+    wait_for_trigger:
+    - event_type: mobile_app_notification_action
+      event_data:
+        action: '{{ action_mute_15 }}'
+      trigger: event
+    - event_type: mobile_app_notification_action
+      event_data:
+        action: '{{ action_mute_60 }}'
+      trigger: event
+    - event_type: mobile_app_notification_action
+      event_data:
+        action: '{{ action_mute_360 }}'
+      trigger: event
+    - event_type: mobile_app_notification_action
+      event_data:
+        action: '{{ action_mute_720 }}'
+      trigger: event
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ wait.trigger.event.data.action == action_mute_15 }}'
+      sequence:
+      - event: BACK_MOTION_MUTE
+        event_data:
+          minutes: 15
+    - conditions:
+      - condition: template
+        value_template: '{{ wait.trigger.event.data.action == action_mute_60 }}'
+      sequence:
+      - event: BACK_MOTION_MUTE
+        event_data:
+          minutes: 60
+    - conditions:
+      - condition: template
+        value_template: '{{ wait.trigger.event.data.action == action_mute_360 }}'
+      sequence:
+      - event: BACK_MOTION_MUTE
+        event_data:
+          minutes: 360
+    - conditions:
+      - condition: template
+        value_template: '{{ wait.trigger.event.data.action == action_mute_720 }}'
+      sequence:
+      - event: BACK_MOTION_MUTE
+        event_data:
+          minutes: 720
+    default:
+    - event: BACK_MOTION_MUTE
+      event_data:
+        minutes: 0
+  trace:
+    stored_traces: 50
+  mode: single
+- id: '1734719045102'
+  alias: Shed motion
+  description: ''
+  triggers:
+  - entity_id:
+    - binary_sensor.shed_motion_occupancy
+    to: 'on'
+    trigger: state
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 0
+  conditions:
+  - condition: or
+    conditions:
+    - condition: state
+      state: 'off'
+      entity_id: input_boolean.shed_motion_mute
+    - condition: state
+      state: unknown
+      entity_id: input_boolean.shed_motion_mute
+    - condition: state
+      entity_id: input_boolean.shed_motion_mute
+      state: unavailable
+  - condition: state
+    state: 'off'
+    entity_id: input_boolean.shed_motion_cooldown
+  actions:
+  - event: SHED_OUTSIDE_LIGHT
+    event_data: {}
+  - event: SHED_MOTION_COOLDOWN
+    event_data: {}
+  - alias: Set up variables for the actions
+    variables:
+      action_mute_15: '{{ "MUTE_15_" ~ context.id }}'
+      action_mute_60: '{{ "MUTE_60_" ~ context.id }}'
+      action_mute_360: '{{ "MUTE_360_" ~ context.id }}'
+      action_mute_720: '{{ "MUTE_720_" ~ context.id }}'
+  - data:
+      filename: /config/www/snapshots/shed_motion_snapshot1.png
+    action: camera.snapshot
+    target:
+      entity_id:
+      - camera.back_garden_entry
+  - data:
+      title: Shed Motion
+      message: "There is some activity inside me \U0001F977\U0001F3FC"
+      data:
+        group: back-garden
+        image: https://ha.madebysteven.nl/local/snapshots/shed_motion_snapshot1.png?v={{
+          (state_attr('automation.shed_motion', 'last_triggered') | as_datetime).timestamp()
+          | int }}
+        actions:
+        - action: SHED_OUTSIDE_LIGHT_OFF
+          title: Turn light off
+        - action: '{{action_mute_15}}'
+          title: Mute for 15 minutes
+        - action: '{{action_mute_60}}'
+          title: Mute for 1 hour
+        - action: '{{action_mute_360}}'
+          title: Mute for 6 hours
+        - action: '{{action_mute_720}}'
+          title: Mute for 12 hours
+    action: notify.steven
+  - alias: Wait for a response
+    timeout: 00:01:00
+    continue_on_timeout: false
+    wait_for_trigger:
+    - event_type: mobile_app_notification_action
+      event_data:
+        action: '{{ action_mute_15 }}'
+      trigger: event
+    - event_type: mobile_app_notification_action
+      event_data:
+        action: '{{ action_mute_60 }}'
+      trigger: event
+    - event_type: mobile_app_notification_action
+      event_data:
+        action: '{{ action_mute_360 }}'
+      trigger: event
+    - event_type: mobile_app_notification_action
+      event_data:
+        action: '{{ action_mute_720 }}'
+      trigger: event
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ wait.trigger.event.data.action == action_mute_15 }}'
+      sequence:
+      - event: SHED_MOTION_MUTE
+        event_data:
+          minutes: 15
+    - conditions:
+      - condition: template
+        value_template: '{{ wait.trigger.event.data.action == action_mute_60 }}'
+      sequence:
+      - event: SHED_MOTION_MUTE
+        event_data:
+          minutes: 60
+    - conditions:
+      - condition: template
+        value_template: '{{ wait.trigger.event.data.action == action_mute_360 }}'
+      sequence:
+      - event: SHED_MOTION_MUTE
+        event_data:
+          minutes: 360
+    - conditions:
+      - condition: template
+        value_template: '{{ wait.trigger.event.data.action == action_mute_720 }}'
+      sequence:
+      - event: SHED_MOTION_MUTE
+        event_data:
+          minutes: 720
+    default:
+    - event: SHED_MOTION_MUTE
+      event_data:
+        minutes: 0
+  mode: single
+- id: '1734719724267'
+  alias: Shed door
+  description: ''
+  triggers:
+  - entity_id:
+    - binary_sensor.shed_door_contact
+    trigger: state
+    to: 'on'
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 0
+  conditions:
+  - condition: state
+    state: 'off'
+    entity_id: input_boolean.shed_door_cooldown
+  actions:
+  - data:
+      filename: /config/www/snapshots/shed_door_snapshot1.png
+    action: camera.snapshot
+    target:
+      entity_id: camera.back_garden_entry
+  - data:
+      title: Shed Door
+      message: Shed door is open
+      data:
+        group: back-garden
+        image: https://ha.madebysteven.nl/local/snapshots/shed_door_snapshot1.png?v={{
+          (state_attr('automation.shed_door', 'last_triggered') | as_datetime).timestamp()
+          | int }}
+        actions:
+        - action: SHED_OUTSIDE_LIGHT_OFF
+          title: Turn light off
+    action: notify.steven
+  - event: SHED_OUTSIDE_LIGHT
+    event_data: {}
+  - event: SHED_DOOR_COOLDOWN
+    event_data: {}
+  mode: single
+- id: '1734786625427'
+  alias: Front garden event detection
+  description: ''
+  triggers:
+  - trigger: mqtt
+    topic: frigate/events
+    id: frigate-event
+    payload: doorbell
+    value_template: '{{ value_json[''after''][''camera''] }}'
+    variables:
+      after_zones: '{{ trigger.payload_json[''after''][''entered_zones''] }}'
+      before_zones: '{{ trigger.payload_json[''before''][''entered_zones''] }}'
+      camera: '{{ trigger.payload_json[''after''][''camera''] }}'
+      id: '{{ trigger.payload_json[''after''][''id''] }}'
+      label: '{{ trigger.payload_json[''after''][''label''] }}'
+      score: '{{ trigger.payload_json[''after''][''score''] }}'
+      time_clip_start: '{{ trigger.payload_json[''after''][''start_time''] - 10.0
+        }}'
+    enabled: true
+  conditions:
+  - condition: or
+    conditions:
+    - condition: template
+      value_template: '{{ trigger.payload_json[''type''] == ''new'' }}'
+      enabled: true
+    - condition: template
+      value_template: '{{ before_zones | length == 0 }}'
+      enabled: true
+    enabled: true
+  - condition: template
+    value_template: '{{ "Front_Garden" in after_zones or "Road" in after_zones }}'
+    enabled: true
+  - condition: or
+    conditions:
+    - condition: state
+      state: 'off'
+      entity_id: input_boolean.front_motion_mute
+    - condition: state
+      state: unknown
+      entity_id: input_boolean.front_motion_mute
+    - condition: state
+      entity_id: input_boolean.front_motion_mute
+      state: unavailable
+  - condition: state
+    state: 'off'
+    entity_id: input_boolean.front_motion_cooldown
+  actions:
+  - event: FRONT_MOTION_COOLDOWN
+    event_data: {}
+  - alias: Set up variables for the actions
+    variables:
+      action_mute_15: '{{ "MUTE_15_" ~ context.id }}'
+      action_mute_60: '{{ "MUTE_60_" ~ context.id }}'
+      action_mute_360: '{{ "MUTE_360_" ~ context.id }}'
+      action_mute_720: '{{ "MUTE_720_" ~ context.id }}'
+  - alias: Download snapshot
+    action: shell_command.download_snapshot
+    data:
+      id: '{{ trigger.payload_json[''after''][''id''] }}'
+    response_variable: download_response
+  - data:
+      title: Front garden camera
+      message: '{{ label | title }} detected'
+      data:
+        tag: '{{ id }}'
+        group: front-garden
+        image: https://ha.madebysteven.nl/local/snapshots/{{ trigger.payload_json['after']['id']
+          }}.jpg
+        actions:
+        - action: '{{action_mute_15}}'
+          title: Mute for 15 minutes
+        - action: '{{action_mute_60}}'
+          title: Mute for 1 hour
+        - action: '{{action_mute_360}}'
+          title: Mute for 6 hours
+        - action: '{{action_mute_720}}'
+          title: Mute for 12 hours
+    action: notify.security
+    enabled: true
+  - alias: Wait for a response
+    timeout: 00:01:00
+    continue_on_timeout: false
+    wait_for_trigger:
+    - event_type: mobile_app_notification_action
+      event_data:
+        action: '{{ action_mute_15 }}'
+      trigger: event
+    - event_type: mobile_app_notification_action
+      event_data:
+        action: '{{ action_mute_60 }}'
+      trigger: event
+    - event_type: mobile_app_notification_action
+      event_data:
+        action: '{{ action_mute_360 }}'
+      trigger: event
+    - event_type: mobile_app_notification_action
+      event_data:
+        action: '{{ action_mute_720 }}'
+      trigger: event
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ wait.trigger.event.data.action == action_mute_15 }}'
+      sequence:
+      - event: FRONT_MOTION_MUTE
+        event_data:
+          minutes: 15
+    - conditions:
+      - condition: template
+        value_template: '{{ wait.trigger.event.data.action == action_mute_60 }}'
+      sequence:
+      - event: FRONT_MOTION_MUTE
+        event_data:
+          minutes: 60
+    - conditions:
+      - condition: template
+        value_template: '{{ wait.trigger.event.data.action == action_mute_360 }}'
+      sequence:
+      - event: FRONT_MOTION_MUTE
+        event_data:
+          minutes: 360
+    - conditions:
+      - condition: template
+        value_template: '{{ wait.trigger.event.data.action == action_mute_720 }}'
+      sequence:
+      - event: FRONT_MOTION_MUTE
+        event_data:
+          minutes: 720
+    default:
+    - event: FRONT_MOTION_MUTE
+      event_data:
+        minutes: 0
+  trace:
+    stored_traces: 50
+  mode: single
+- id: '1735494085909'
+  alias: Back motion mute
+  description: ''
+  triggers:
+  - event_type: BACK_MOTION_MUTE
+    event_data: {}
+    trigger: event
+  conditions: []
+  actions:
+  - action: input_boolean.turn_on
+    metadata: {}
+    data: {}
+    target:
+      entity_id: input_boolean.back_motion_mute
+  - data:
+      message: "{% set minutes = trigger.event.data.minutes | int %} {% if minutes
+        < 60 %}\n  The back garden camera is muted for 15 minutes.\n{% else %}\n  {%
+        set hours = minutes // 60 %}\n  {% set remaining_minutes = minutes % 60 %}\n
+        \ The back garden camera is muted for {{ hours }} hours.\n{% endif %}\n"
+    action: notify.security
+  - delay: '{{ trigger.event.data.minutes | int }}:00
+
+      '
+  - action: input_boolean.turn_off
+    metadata: {}
+    data: {}
+    target:
+      entity_id: input_boolean.back_motion_mute
+  mode: single
+- id: '1735558453493'
+  alias: Ford Fiesta - Movement Notification
+  triggers:
+  - entity_id:
+    - binary_sensor.ford_fiesta_motion
+    trigger: state
+    to: 'on'
+    for:
+      hours: 0
+      minutes: 1
+      seconds: 0
+  conditions:
+  - condition: numeric_state
+    entity_id: sensor.ford_fiesta_speed_in_km_h
+    above: 5
+    enabled: true
+  - condition: state
+    entity_id: input_boolean.ford_fiesta_cooldown
+    state: 'off'
+  actions:
+  - data:
+      title: Ford Fiesta
+      message: The car is moving.
+    action: notify.steven
+  - entity_id: input_boolean.ford_fiesta_cooldown
+    action: input_boolean.turn_on
+  - delay: 00:05:00
+  - entity_id: input_boolean.ford_fiesta_cooldown
+    action: input_boolean.turn_off
+- id: '1735558989880'
+  alias: Ford Fiesta - Stopped Notification
+  description: ''
+  triggers:
+  - entity_id:
+    - binary_sensor.ford_fiesta_motion
+    trigger: state
+    to: 'off'
+  - entity_id:
+    - binary_sensor.ford_fiesta_motion
+    trigger: state
+    to: unavailable
+  - entity_id:
+    - binary_sensor.ford_fiesta_motion
+    trigger: state
+    to: unknown
+  conditions:
+  - condition: numeric_state
+    entity_id: sensor.ford_fiesta_speed_in_km_h
+    below: 5
+  - condition: state
+    entity_id: input_boolean.ford_fiesta_cooldown
+    state: 'off'
+  actions:
+  - data:
+      title: Ford Fiesta
+      message: The car has stopped.
+    action: notify.steven
+  - entity_id: input_boolean.ford_fiesta_cooldown
+    action: input_boolean.turn_on
+  - delay: 00:10:00
+  - entity_id: input_boolean.ford_fiesta_cooldown
+    action: input_boolean.turn_off
+- id: '1736348659804'
+  alias: Proxmox api status frigate endpoint
+  description: ''
+  triggers:
+  - trigger: state
+    entity_id:
+    - input_button.proxmox_api_status_frigate
+  conditions: []
+  actions:
+  - action: shell_command.proxmox_api_status_frigate
+    data: {}
+  mode: single
+- id: '1736965830000'
+  alias: Shed outside light
+  description: ''
+  triggers:
+  - event_type: SHED_OUTSIDE_LIGHT
+    trigger: event
+  conditions:
+  - condition: and
+    conditions:
+    - condition: sun
+      before: sunrise
+      after: sunset
+    - condition: state
+      entity_id: input_boolean.manual_shed_outside_light
+      state: 'off'
+  actions:
+  - action: light.turn_on
+    metadata: {}
+    data:
+      rgb_color:
+      - 255
+      - 255
+      - 255
+    target:
+      entity_id: light.shed_outside_light
+  - delay:
+      hours: 0
+      minutes: 15
+      seconds: 0
+      milliseconds: 0
+  - action: light.turn_off
+    metadata: {}
+    data: {}
+    target:
+      entity_id: light.shed_outside_light
+  mode: single
+- id: '1736965950099'
+  alias: Shed outside light off
+  description: ''
+  triggers:
+  - event_type: mobile_app_notification_action
+    trigger: event
+    event_data:
+      action: SHED_OUTSIDE_LIGHT_OFF
+  conditions: []
+  actions:
+  - action: light.turn_off
+    metadata: {}
+    data: {}
+    target:
+      entity_id: light.shed_outside_light
+  mode: single
+- id: '1736968800802'
+  alias: Back motion cooldown
+  description: ''
+  triggers:
+  - event_type: BACK_MOTION_COOLDOWN
+    trigger: event
+  conditions: []
+  actions:
+  - action: input_boolean.turn_on
+    metadata: {}
+    data: {}
+    target:
+      entity_id: input_boolean.back_motion_cooldown
+  - delay:
+      hours: 0
+      minutes: 5
+      seconds: 0
+  - action: input_boolean.turn_off
+    metadata: {}
+    data: {}
+    target:
+      entity_id: input_boolean.back_motion_cooldown
+  mode: single
+- id: '1736969765147'
+  alias: Front motion cooldown
+  description: ''
+  triggers:
+  - event_type: FRONT_MOTION_COOLDOWN
+    trigger: event
+  conditions: []
+  actions:
+  - action: input_boolean.turn_on
+    metadata: {}
+    data: {}
+    target:
+      entity_id: input_boolean.front_motion_cooldown
+  - delay:
+      hours: 0
+      minutes: 5
+      seconds: 0
+      milliseconds: 0
+  - action: input_boolean.turn_off
+    metadata: {}
+    data: {}
+    target:
+      entity_id: input_boolean.front_motion_cooldown
+  mode: single
+- id: '1736969863916'
+  alias: Mailbox cooldown
+  description: ''
+  triggers:
+  - event_type: MAILBOX_COOLDOWN
+    trigger: event
+  conditions: []
+  actions:
+  - action: input_boolean.turn_on
+    metadata: {}
+    data: {}
+    target:
+      entity_id: input_boolean.mailbox_cooldown
+  - delay:
+      hours: 0
+      minutes: 15
+      seconds: 0
+  - action: input_boolean.turn_off
+    metadata: {}
+    data: {}
+    target:
+      entity_id: input_boolean.mailbox_cooldown
+  mode: single
+- id: '1736970694814'
+  alias: Shed motion cooldown
+  description: ''
+  triggers:
+  - event_type: SHED_MOTION_COOLDOWN
+    trigger: event
+  conditions: []
+  actions:
+  - action: input_boolean.turn_on
+    metadata: {}
+    data: {}
+    target:
+      entity_id: input_boolean.shed_motion_cooldown
+  - delay:
+      hours: 0
+      minutes: 15
+      seconds: 0
+      milliseconds: 0
+  - action: input_boolean.turn_off
+    metadata: {}
+    data: {}
+    target:
+      entity_id: input_boolean.shed_motion_cooldown
+  mode: single
+- id: '1737016029102'
+  alias: Proxmox API Restart Frigate with Status Check
+  description: ''
+  triggers:
+  - entity_id: input_button.proxmox_api_restart_frigate
+    trigger: state
+  conditions: []
+  actions:
+  - data:
+      message: Restarting LXC
+      title: Frigate issues
+    action: notify.steven
+  - response_variable: stop_response
+    action: shell_command.proxmox_api_stop_frigate
+    data: {}
+  - repeat:
+      while:
+      - condition: template
+        value_template: '{{ stop_response.stdout != ''"stopped"'' }}'
+      sequence:
+      - response_variable: stop_response
+        action: shell_command.proxmox_api_status_frigate
+        data: {}
+      - delay: 00:00:05
+  - response_variable: start_response
+    action: shell_command.proxmox_api_start_frigate
+    data: {}
+  - repeat:
+      while:
+      - condition: template
+        value_template: '{{ start_response.stdout != ''"running"'' }}'
+      sequence:
+      - response_variable: start_response
+        action: shell_command.proxmox_api_status_frigate
+        data: {}
+      - delay: 00:00:05
+  - data:
+      message: Successfully restarted
+      title: Frigate issues
+    action: notify.steven
+  mode: single
+- id: '1737016206951'
+  alias: Restart Frigate when doorbell or back garden becomes unavailable
+  description: ''
+  triggers:
+  - trigger: state
+    entity_id:
+    - camera.back_garden_entry
+    - camera.back_garden_house
+    - camera.doorbell
+    to: unavailable
+    for:
+      hours: 0
+      minutes: 5
+      seconds: 0
+  - trigger: state
+    entity_id:
+    - camera.back_garden_entry
+    - camera.back_garden_house
+    - camera.doorbell
+    to: unknown
+    for:
+      hours: 0
+      minutes: 5
+      seconds: 0
+  conditions: []
+  actions:
+  - action: input_button.press
+    metadata: {}
+    data: {}
+    target:
+      entity_id: input_button.proxmox_api_restart_frigate
+  mode: single
+- id: '1737409897663'
+  alias: Bedroom Wake Up
+  description: ''
+  triggers:
+  - trigger: time
+    at: input_datetime.bedroom_wake_up
+  conditions:
+  - condition: state
+    entity_id: input_boolean.bedroom_wake_up
+    state: 'on'
+  actions:
+  - action: switch.turn_on
+    metadata: {}
+    data: {}
+    target:
+      entity_id: switch.shellyplus1pm_bedroom_switch_0
+  - action: input_boolean.turn_off
+    metadata: {}
+    data: {}
+    target:
+      entity_id: input_boolean.bedroom_wake_up
+  mode: single
+- id: '1737534960192'
+  alias: Turn off lights during restricted times closet Scott
+  description: 'Turns off lights if they are on during restricted times and sends
+    a notification.
+
+    '
+  triggers:
+  - entity_id:
+    - light.wled_closet_top_scott
+    - light.wled_closet_bottom_scott
+    to: 'on'
+    trigger: state
+  - at:
+    - input_datetime.scott_ambient_light_start_time
+    - input_datetime.scott_ambient_light_end_time
+    trigger: time
+  conditions: []
+  actions:
+  - condition: and
+    conditions:
+    - condition: time
+      after: input_datetime.scott_ambient_light_start_time
+      before: input_datetime.scott_ambient_light_end_time
+    - condition: or
+      conditions:
+      - condition: device
+        type: is_on
+        device_id: 4d3e962af495099999cf292c792f521a
+        entity_id: 48740330c843fa258910fa83e147972b
+        domain: light
+      - condition: device
+        type: is_on
+        device_id: 57afdf276e72838f5a59ff865c253324
+        entity_id: aade61835ccdbd4978e243ef4d4b8c91
+        domain: light
+  - target:
+      entity_id:
+      - light.wled_closet_top_scott
+      - light.wled_closet_bottom_scott
+    action: light.turn_off
+    data: {}
+  mode: single
+- id: '1737892727086'
+  alias: Turn on ambient lights with combined lux
+  triggers:
+  - value_template: '{% set front = states(''sensor.light_sensor_front_garden_illuminance'')
+      | float(0) %} {% set back = states(''sensor.light_sensor_back_garden_illuminance'')
+      | float(0) %} {% set living = states(''sensor.light_sensor_living_room_illuminance'')
+      | float(0) %} {{ ((front + back + living) / 3) < 100 }}
+
+      '
+    trigger: template
+    for:
+      hours: 0
+      minutes: 5
+      seconds: 0
+  - trigger: sun
+    event: sunrise
+    offset: -00:30
+  conditions:
+  - condition: or
+    conditions:
+    - condition: time
+      after: 06:00:00
+    - condition: sun
+      after: sunrise
+      after_offset: -00:30
+  actions:
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: input_boolean.holiday_mode
+        state:
+        - 'off'
+      sequence:
+      - target:
+          entity_id: light.ambient_lights
+        action: light.turn_on
+        data: {}
+    - conditions:
+      - condition: state
+        entity_id: input_boolean.holiday_mode
+        state:
+        - 'on'
+      sequence:
+      - target:
+          entity_id: light.ambient_lights
+        action: light.turn_off
+      - variables:
+          chosen_light: '{{ state_attr(''light.ambient_lights'', ''entity_id'') |
+            random }}
+
+            '
+      - data:
+          entity_id: '{{ chosen_light }}'
+        action: light.turn_on
+  mode: single
+- id: '1737897039766'
+  alias: Toggle ambient lights
+  description: ''
+  triggers:
+  - trigger: state
+    entity_id:
+    - input_boolean.ambient_lights
+  conditions: []
+  actions:
+  - action: light.toggle
+    metadata: {}
+    data: {}
+    target:
+      entity_id: light.ambient_lights
+  mode: single
+- id: '1737920718562'
+  alias: Turn off lights with combined lux
+  description: ''
+  triggers:
+  - value_template: '{% set front = states(''sensor.light_sensor_front_garden_illuminance'')
+      | float(0) %} {% set back = states(''sensor.light_sensor_back_garden_illuminance'')
+      | float(0) %} {% set living = states(''sensor.light_sensor_living_room_illuminance'')
+      | float(0) %} {{ ((front + back + living) / 3) > 150 }}
+
+      '
+    trigger: template
+    for:
+      hours: 0
+      minutes: 5
+      seconds: 0
+  actions:
+  - target:
+      entity_id:
+      - light.ambient_lights
+      - light.downstairs
+    action: light.turn_off
+    data: {}
+  mode: single
+- id: '1737999736464'
+  alias: Living room display run antiburn every 6 hours
+  description: ''
+  triggers:
+  - trigger: time_pattern
+    hours: /6
+  conditions: []
+  actions:
+  - action: switch.turn_on
+    metadata: {}
+    data: {}
+    target:
+      entity_id: switch.living_room_antiburn
+  mode: single
+- id: '1738004313499'
+  alias: Toggle ambient lights Scott
+  description: ''
+  triggers:
+  - domain: mqtt
+    device_id: 864162471f24479c7021c9bfe7eb945f
+    type: action
+    subtype: single
+    trigger: device
+  conditions: []
+  actions:
+  - choose:
+    - conditions:
+      - condition: time
+        after: input_datetime.scott_ambient_light_start_time
+        before: input_datetime.scott_ambient_light_end_time
+      sequence:
+      - action: light.toggle
+        metadata: {}
+        data: {}
+        target:
+          entity_id: light.bedroom_scott_ambient
+    default:
+    - action: light.toggle
+      metadata: {}
+      data:
+        rgb_color:
+        - 254
+        - 180
+        - 63
+        brightness_pct: 25
+      target:
+        entity_id: light.closet_scott
+  mode: single
+- id: '1738006056919'
+  alias: Increase living room brightness when bright light
+  description: ''
+  triggers:
+  - trigger: state
+    entity_id:
+    - light.living_room_backlight
+    to: 'on'
+  conditions: []
+  actions:
+  - choose:
+    - conditions:
+      - condition: numeric_state
+        entity_id: sensor.light_sensor_living_room_illuminance
+        above: 500
+      sequence:
+      - action: light.turn_on
+        metadata: {}
+        data:
+          brightness_pct: 100
+        target:
+          entity_id: light.living_room_backlight
+    - conditions:
+      - condition: numeric_state
+        entity_id: sensor.light_sensor_living_room_illuminance
+        below: 500
+      sequence:
+      - action: light.turn_on
+        metadata: {}
+        data:
+          brightness_pct: 25
+        target:
+          entity_id: light.living_room_backlight
+  mode: single
+- id: '1738006733358'
+  alias: Set start page when display becomes idle
+  description: ''
+  triggers:
+  - trigger: state
+    entity_id:
+    - light.living_room_backlight
+    to: 'off'
+  conditions: []
+  actions:
+  - action: number.set_value
+    metadata: {}
+    data:
+      value: '1'
+    target:
+      entity_id: number.living_room_page_number
+  mode: single
+- id: '1738014073586'
+  alias: Turn off ambient lights
+  description: ''
+  triggers:
+  - trigger: state
+    entity_id:
+    - input_button.turn_off_ambient_lights
+  conditions: []
+  actions:
+  - action: light.turn_off
+    metadata: {}
+    data: {}
+    target:
+      entity_id: light.ambient_lights
+  mode: single
+- id: '1738226161403'
+  alias: Heating daily target changed
+  description: ''
+  triggers:
+  - trigger: state
+    entity_id:
+    - input_number.heating_daily_target
+  conditions:
+  - condition: state
+    entity_id: sensor.active_heating_schedule
+    state: Daily
+  actions:
+  - action: climate.turn_on
+    target:
+      entity_id:
+      - climate.thermostat
+      - climate.all_radiators
+    data: {}
+  - action: climate.set_temperature
+    metadata: {}
+    data:
+      temperature: '{{ states(''input_number.heating_daily_target'') | float(0) }}'
+    target:
+      entity_id: climate.thermostat
+  - action: climate.set_temperature
+    metadata: {}
+    data:
+      temperature: '{{ states(''input_number.heating_daily_target'') | float(0) }}'
+    target:
+      entity_id: climate.all_radiators
+  mode: single
+- id: '1738266831418'
+  alias: Living Room display backlight turn off
+  description: ''
+  triggers:
+  - trigger: time_pattern
+    minutes: /5
+  conditions:
+  - condition: state
+    entity_id: light.living_room_backlight
+    state: 'on'
+    for:
+      hours: 0
+      minutes: 5
+      seconds: 0
+  actions:
+  - action: light.turn_off
+    metadata: {}
+    data: {}
+    target:
+      entity_id: light.living_room_backlight
+  mode: single
+- id: '1738267063414'
+  alias: New automation
+  description: ''
+  triggers:
+  - trigger: state
+    entity_id:
+    - binary_sensor.attic_motion_occupancy
+    from: 'on'
+    to:
+    for:
+      hours: 0
+      minutes: 5
+      seconds: 0
+  conditions: []
+  actions:
+  - type: turn_off
+    device_id: 9caab569dcbbb4820c858aa6a391a04d
+    entity_id: a3e22a27b74fbb43236c6ec772da93ff
+    domain: light
+  mode: single
+- id: '1738267293652'
+  alias: Dashboard display run antiburn every 6 hours
+  description: ''
+  triggers:
+  - trigger: time_pattern
+    hours: /6
+  conditions: []
+  actions:
+  - type: turn_on
+    device_id: 9caab569dcbbb4820c858aa6a391a04d
+    entity_id: 7018c10f60767c9e6a0cdbb4c4e19b3a
+    domain: switch
+  mode: single
+- id: '1738448736831'
+  alias: Flip daily routine
+  description: ''
+  triggers:
+  - trigger: time
+    at: input_datetime.daily_flip_routine
+  conditions: []
+  actions:
+  - if:
+    - condition: state
+      entity_id: input_boolean.skip_daily_flip_routine
+      state: 'off'
+    then:
+    - device_id: 3e6fd304c28efdba71d5ad786c24f8ba
+      domain: vacuum
+      entity_id: 47ea85e187fec774c0f1151c3e6085fc
+      type: clean
+    else:
+    - action: input_boolean.turn_off
+      metadata: {}
+      data: {}
+      target:
+        entity_id: input_boolean.skip_daily_flip_routine
+  mode: single
+- id: '1738683309428'
+  alias: Set start page when display becomes idle
+  description: ''
+  triggers:
+  - type: turned_off
+    device_id: 9caab569dcbbb4820c858aa6a391a04d
+    entity_id: a3e22a27b74fbb43236c6ec772da93ff
+    domain: light
+    trigger: device
+  conditions: []
+  actions:
+  - device_id: 9caab569dcbbb4820c858aa6a391a04d
+    domain: number
+    entity_id: b4fff15be8d489acfe23ff753b8477ae
+    type: set_value
+    value: 1
+  mode: single
+- id: '1738929876197'
+  alias: Return Flip to dock
+  description: ''
+  triggers:
+  - trigger: state
+    entity_id:
+    - vacuum.flip
+    for:
+      hours: 0
+      minutes: 5
+      seconds: 0
+    to: idle
+  - trigger: state
+    entity_id:
+    - vacuum.flip
+    to: paused
+    for:
+      hours: 0
+      minutes: 5
+      seconds: 0
+  conditions: []
+  actions:
+  - device_id: 3e6fd304c28efdba71d5ad786c24f8ba
+    domain: vacuum
+    entity_id: 47ea85e187fec774c0f1151c3e6085fc
+    type: dock
+  mode: single
+- id: '1739045728548'
+  alias: Dishwasher Notifications & Actions
+  description: ''
+  use_blueprint:
+    path: Blackshome/appliance-notifications.yaml
+    input:
+      power_sensor: sensor.dishwasher_power
+      include_end_notify: enable_end_notify_options
+      end_notify_device:
+      - 772e3cdb8371682e1963ad8c49a46133
+      end_message_title: Dishwasher
+      end_message: Yippee the dishwasher is finished!
+      end_reminder_notification_message: Hey! Your dishwasher is ready, don't leave
+        it in there!
+      start_appliance_power: 10
+      start_time_delay: 2
+      running_dead_zone: 2
+      end_time_delay: 2
+      end_repeat_count: 3
+- id: '1740473739321'
+  alias: Washing Machine Notifications & Actions
+  description: ''
+  use_blueprint:
+    path: Blackshome/appliance-notifications.yaml
+    input:
+      power_sensor: sensor.washing_machine_power
+      include_end_notify: enable_end_notify_options
+      end_notify_device:
+      - 772e3cdb8371682e1963ad8c49a46133
+      end_message_title: Washing Machine
+      end_message: Yippee the washing machine is finished!
+      end_reminder_notification_message: Hey! Your dishwasher is ready, don't leave
+        it in there!
+      start_appliance_power: 10
+      start_time_delay: 2
+      running_dead_zone: 2
+      end_time_delay: 2
+      end_repeat_count: 1
+      include_custom_actions:
+      - enable_end_custom_actions
+      end_custom_actions:
+      - action: input_boolean.turn_on
+        metadata: {}
+        data: {}
+        target:
+          entity_id: input_boolean.washing_machine_emptied
+- id: '1740473809303'
+  alias: Dryer Notifications & Actions
+  description: ''
+  use_blueprint:
+    path: Blackshome/appliance-notifications.yaml
+    input:
+      power_sensor: sensor.dryer_power
+      include_end_notify: enable_end_notify_options
+      end_notify_device:
+      - 772e3cdb8371682e1963ad8c49a46133
+      end_message_title: Dryer
+      end_message: Yippee the dryer is finished!
+      end_reminder_notification_message: Hey! Your dishwasher is ready, don't leave
+        it in there!
+      start_appliance_power: 10
+      start_time_delay: 2
+      running_dead_zone: 2
+      end_time_delay: 2
+      end_repeat_count: 1
+- id: '1740689407736'
+  alias: Turn off stair closet charger
+  description: ''
+  triggers:
+  - type: power
+    device_id: 437cc55146b44984cf227b08987d1c8e
+    entity_id: bba3d723407ea786f094c3ceded633e8
+    domain: sensor
+    trigger: device
+    below: 5
+    for:
+      hours: 0
+      minutes: 15
+      seconds: 0
+  conditions:
+  - condition: template
+    value_template: "{{ (as_timestamp(now()) - as_timestamp(states('sensor.uptime'))) > 1200 }}"
+  actions:
+  - type: turn_off
+    device_id: 437cc55146b44984cf227b08987d1c8e
+    entity_id: 460670672e5f11489f8b26a20901b000
+    domain: switch
+  - action: notify.steven
+    metadata: {}
+    data:
+      title: Stair closet charger
+      message: Power below 5w more then 15 minutes
+  mode: single
+- id: '1740949472181'
+  alias: Turn off garden lights
+  description: ''
+  triggers:
+  - trigger: state
+    entity_id:
+    - input_button.turn_off_garden_lights
+  conditions: []
+  actions:
+  - action: light.turn_off
+    metadata: {}
+    data: {}
+    target:
+      entity_id:
+      - light.shed_outside_light
+  - action: light.turn_off
+    data: {}
+    target:
+      entity_id:
+      - light.back_garden_lights
+      - light.back_garden_lights_second
+  mode: single
+- id: '1741349434569'
+  alias: Toggle shed light button
+  description: ''
+  triggers:
+  - domain: mqtt
+    device_id: 2728878b733fd140290d90fcfef4fbcc
+    type: action
+    subtype: single
+    trigger: device
+  conditions: []
+  actions:
+  - action: light.toggle
+    metadata: {}
+    data:
+      rgb_color:
+      - 245
+      - 245
+      - 220
+      brightness_pct: 80
+    target:
+      entity_id: light.shed_outside_light
+  mode: single
+- id: '1742142324820'
+  alias: Turn on bathroom ventilation restricted hours
+  description: ''
+  triggers:
+  - type: turned_on
+    device_id: 122c0d1175bd27cd9002b6d2abad46d2
+    entity_id: 2926520432902fb770130501d4ffa404
+    domain: light
+    trigger: device
+  conditions:
+  - condition: time
+    after: 08:00:00
+    before: '20:00:00'
+  - type: is_humidity
+    condition: device
+    device_id: b81ec67a249cff4c42dfc6d64440c9f7
+    entity_id: 38deabef055bafa202191b8ef4ba4009
+    domain: sensor
+    above: 60
+    enabled: false
+  actions:
+  - type: turn_on
+    device_id: 122c0d1175bd27cd9002b6d2abad46d2
+    entity_id: 12f53f29e165caa2a1cde76c2618a765
+    domain: switch
+  - type: turn_off
+    device_id: 122c0d1175bd27cd9002b6d2abad46d2
+    entity_id: 12f53f29e165caa2a1cde76c2618a765
+    domain: switch
+  - delay:
+      hours: 0
+      minutes: 15
+      seconds: 0
+      milliseconds: 0
+  - type: turn_on
+    device_id: 122c0d1175bd27cd9002b6d2abad46d2
+    entity_id: 12f53f29e165caa2a1cde76c2618a765
+    domain: switch
+  - type: turn_off
+    device_id: 122c0d1175bd27cd9002b6d2abad46d2
+    entity_id: 12f53f29e165caa2a1cde76c2618a765
+    domain: switch
+  mode: single
+- id: '1742319900228'
+  alias: Turn off bathroom light after 30 minutes
+  description: ''
+  triggers:
+  - type: turned_on
+    device_id: 122c0d1175bd27cd9002b6d2abad46d2
+    entity_id: 2926520432902fb770130501d4ffa404
+    domain: light
+    trigger: device
+    for:
+      hours: 0
+      minutes: 30
+      seconds: 0
+  conditions: []
+  actions:
+  - type: turn_off
+    device_id: 122c0d1175bd27cd9002b6d2abad46d2
+    entity_id: 2926520432902fb770130501d4ffa404
+    domain: light
+  mode: single
+- id: '1742895862333'
+  alias: Front door notify toggle
+  description: ''
+  triggers:
+  - type: opened
+    device_id: 4b47812a83fa6b8b25d2aeb006542b27
+    entity_id: 466bed788fa829f11463508478b584af
+    domain: binary_sensor
+    trigger: device
+  conditions: []
+  actions:
+  - action: input_boolean.turn_on
+    metadata: {}
+    data: {}
+    target:
+      entity_id: input_boolean.front_door_notify
+  mode: single
+- id: '1742895912214'
+  alias: Back door notify toggle
+  description: ''
+  triggers:
+  - type: opened
+    device_id: 32c9c1b0bfd4a2f5143cbf90170fb587
+    entity_id: eb9ec30403e2057b0420b3094551820d
+    domain: binary_sensor
+    trigger: device
+  conditions: []
+  actions:
+  - action: input_boolean.turn_on
+    metadata: {}
+    data: {}
+    target:
+      entity_id: input_boolean.back_door_notify
+  mode: single
+- id: '1742895983332'
+  alias: Shed door notify toggle
+  description: ''
+  triggers:
+  - type: opened
+    device_id: b71c88a406fd762e9fd432a8e9a000b2
+    entity_id: 0cac6dd75fe4cbb608977db1e5f093d4
+    domain: binary_sensor
+    trigger: device
+  conditions: []
+  actions:
+  - action: input_boolean.turn_on
+    metadata: {}
+    data: {}
+    target:
+      entity_id: input_boolean.shed_door_notify
+  mode: single
+- id: '1742899362061'
+  alias: Shed motion notify toggle
+  description: ''
+  triggers:
+  - type: occupied
+    device_id: 2450dec60b41190a9e43afe2ea322d08
+    entity_id: d4fa3024e0a41bbe30f2c790595c273b
+    domain: binary_sensor
+    trigger: device
+  conditions: []
+  actions:
+  - action: input_boolean.turn_on
+    metadata: {}
+    data: {}
+    target:
+      entity_id: input_boolean.shed_motion_notify
+  mode: single
+- id: '1742899435013'
+  alias: Living room big window notify toggle
+  description: ''
+  triggers:
+  - trigger: state
+    entity_id:
+    - binary_sensor.living_room_big_window_contact
+    to:
+    - 'on'
+  conditions: []
+  actions:
+  - action: input_boolean.turn_on
+    metadata: {}
+    data: {}
+    target:
+      entity_id: input_boolean.living_room_big_window_notify
+  mode: single
+- id: '1742899480683'
+  alias: Living room small window notify toggle
+  description: ''
+  triggers:
+  - trigger: state
+    entity_id:
+    - binary_sensor.living_room_small_window_contact
+    to:
+    - 'on'
+  conditions: []
+  actions:
+  - action: input_boolean.turn_on
+    metadata: {}
+    data: {}
+    target:
+      entity_id: input_boolean.living_room_small_window_notify
+  mode: single
+- id: '1742899535505'
+  alias: Bedroom window notify toggle
+  description: ''
+  triggers:
+  - trigger: state
+    entity_id:
+    - binary_sensor.bedroom_window_contact
+    to:
+    - 'on'
+  conditions: []
+  actions:
+  - action: input_boolean.turn_on
+    metadata: {}
+    data: {}
+    target:
+      entity_id: input_boolean.bedroom_window_notify
+  mode: single
+- id: '1742899567870'
+  alias: Bedroom Scott window notify toggle
+  description: ''
+  triggers:
+  - trigger: state
+    entity_id:
+    - binary_sensor.bedroom_scott_window_contact
+    to:
+    - 'on'
+  conditions: []
+  actions:
+  - action: input_boolean.turn_on
+    metadata: {}
+    data: {}
+    target:
+      entity_id: input_boolean.bedroom_scott_window_notify
+  mode: single
+- id: '1743062264797'
+  alias: Turn on hallway light when front door open
+  description: ''
+  triggers:
+  - type: opened
+    device_id: 4b47812a83fa6b8b25d2aeb006542b27
+    entity_id: 466bed788fa829f11463508478b584af
+    domain: binary_sensor
+    trigger: device
+  conditions:
+  - condition: numeric_state
+    entity_id: sensor.light_sensor_living_room_illuminance
+    below: input_number.ambient_light_sensor_threshold
+  actions:
+  - type: turn_on
+    device_id: fdb58a2bc1c708d3b34ca348d2455cad
+    entity_id: 2474c7e127bf771d88450f26f1a89a68
+    domain: light
+  mode: single
+- id: '1743062399431'
+  alias: Turn on dining light when back door open
+  description: ''
+  triggers:
+  - type: opened
+    device_id: 32c9c1b0bfd4a2f5143cbf90170fb587
+    entity_id: eb9ec30403e2057b0420b3094551820d
+    domain: binary_sensor
+    trigger: device
+  conditions:
+  - condition: and
+    conditions:
+    - condition: numeric_state
+      entity_id: sensor.light_sensor_living_room_illuminance
+      below: input_number.ambient_light_sensor_threshold
+    - condition: state
+      entity_id: light.shellyplus1pm_fce8c0fd1230_switch_0
+      state: 'off'
+  actions:
+  - action: light.turn_on
+    metadata: {}
+    data: {}
+    target:
+      entity_id: light.shellyplus1pm_fce8c0fd1230_switch_0
+  - delay:
+      hours: 0
+      minutes: 5
+      seconds: 0
+      milliseconds: 0
+  - action: light.turn_off
+    metadata: {}
+    data: {}
+    target:
+      entity_id: light.shellyplus1pm_fce8c0fd1230_switch_0
+  mode: single
+- id: '1743325272952'
+  alias: Restart woonkamer speakers daily
+  description: ''
+  triggers:
+  - trigger: time
+    at: 00:00:00
+  conditions: []
+  actions:
+  - action: script.restart_woonkamer_speakers
+    metadata: {}
+    data: {}
+  mode: single
+- id: '1743417471259'
+  alias: Front motion mute
+  description: ''
+  triggers:
+  - event_type: FRONT_MOTION_MUTE
+    event_data: {}
+    trigger: event
+  conditions: []
+  actions:
+  - action: input_boolean.turn_on
+    metadata: {}
+    data: {}
+    target:
+      entity_id: input_boolean.front_motion_mute
+  - data:
+      message: "{% set minutes = trigger.event.data.minutes | int %} {% if minutes
+        < 60 %}\n  The front garden camera is muted for 15 minutes.\n{% else %}\n
+        \ {% set hours = minutes // 60 %}\n  {% set remaining_minutes = minutes %
+        60 %}\n  The front garden camera is muted for {{ hours }} hours.\n{% endif
+        %}\n"
+    action: notify.security
+  - delay: '{{ trigger.event.data.minutes | int }}:00
+
+      '
+  - action: input_boolean.turn_off
+    metadata: {}
+    data: {}
+    target:
+      entity_id: input_boolean.front_motion_mute
+  mode: single
+- id: '1743456692086'
+  alias: Shed motion mute
+  description: ''
+  triggers:
+  - event_type: SHED_MOTION_MUTE
+    event_data: {}
+    trigger: event
+  conditions: []
+  actions:
+  - action: input_boolean.turn_on
+    metadata: {}
+    data: {}
+    target:
+      entity_id: input_boolean.shed_motion_mute
+  - data:
+      message: "{% set minutes = trigger.event.data.minutes | int %} {% if minutes
+        < 60 %}\n  Shed motion is muted for 15 minutes.\n{% else %}\n  {% set hours
+        = minutes // 60 %}\n  {% set remaining_minutes = minutes % 60 %}\n  Shed motion
+        is muted for {{ hours }} hours.\n{% endif %}\n"
+    action: notify.security
+  - delay: '{{ trigger.event.data.minutes | int }}:00
+
+      '
+  - action: input_boolean.turn_off
+    metadata: {}
+    data: {}
+    target:
+      entity_id: input_boolean.shed_motion_mute
+  mode: single
+- id: '1744926231377'
+  alias: Turn on back garden lights
+  description: ''
+  triggers:
+  - trigger: numeric_state
+    entity_id:
+    - sensor.light_sensor_back_garden_illuminance
+    below: 200
+    for:
+      hours: 0
+      minutes: 5
+      seconds: 0
+  - trigger: sun
+    event: sunrise
+  - trigger: time
+    at: 07:45:00
+  conditions: []
+  actions:
+  - action: light.turn_on
+    metadata: {}
+    data: {}
+    enabled: true
+    target:
+      entity_id:
+      - light.back_garden_lights
+      - light.back_garden_lights_second
+  mode: single
+- id: '1744926417308'
+  alias: Turn off back garden lights based on day
+  description: Turn off back garden lights earlier on weekdays than on weekends
+  triggers:
+  - at: '21:30:00'
+    trigger: time
+  - at: '23:00:00'
+    trigger: time
+  - at: 00:30:00
+    trigger: time
+  conditions: []
+  actions:
+  - choose:
+    - alias: Weekday off at 23:00
+      conditions:
+      - condition: template
+        value_template: '{{ now().strftime(''%H:%M'') == ''21:30'' }}
+
+          '
+      sequence:
+      - action: light.turn_off
+        data: {}
+        target:
+          entity_id:
+          - light.back_garden_lights_second
+    - alias: Weekday off at 23:00
+      conditions:
+      - condition: template
+        value_template: '{{ now().isoweekday() in [1, 2, 3, 4, 7] and now().strftime(''%H:%M'')
+          == ''23:00'' }}
+
+          '
+      sequence:
+      - action: light.turn_off
+        data: {}
+        target:
+          entity_id:
+          - light.back_garden_lights
+          - light.back_garden_lights_second
+    - alias: Weekend off at 00:30
+      conditions:
+      - condition: template
+        value_template: '{{ now().isoweekday() in [6, 7] and now().strftime(''%H:%M'')
+          == ''00:30'' }}
+
+          '
+      sequence:
+      - action: light.turn_off
+        data: {}
+        target:
+          entity_id:
+          - light.back_garden_lights
+          - light.back_garden_lights_second
+  mode: single
+- id: '1746477487026'
+  alias: Back garden entry event detection
+  description: ''
+  triggers:
+  - trigger: mqtt
+    topic: frigate/events
+    id: frigate-event
+    payload: back_garden_entry
+    value_template: '{{ value_json[''after''][''camera''] }}'
+    variables:
+      after_zones: '{{ trigger.payload_json[''after''][''entered_zones''] }}'
+      before_zones: '{{ trigger.payload_json[''before''][''entered_zones''] }}'
+      camera: '{{ trigger.payload_json[''after''][''camera''] }}'
+      id: '{{ trigger.payload_json[''after''][''id''] }}'
+      label: '{{ trigger.payload_json[''after''][''label''] }}'
+      score: '{{ trigger.payload_json[''after''][''score''] }}'
+      time_clip_start: '{{ trigger.payload_json[''after''][''start_time''] - 10.0
+        }}'
+    enabled: true
+  conditions:
+  - condition: or
+    conditions:
+    - condition: template
+      value_template: '{{ trigger.payload_json[''type''] == ''new'' }}'
+      enabled: true
+    - condition: template
+      value_template: '{{ before_zones | length == 0 }}'
+      enabled: true
+    enabled: true
+  - condition: template
+    value_template: '{{ after_zones[0] == "Back_Garden_Entry" }}'
+    enabled: true
+  - condition: or
+    conditions:
+    - condition: state
+      state: 'off'
+      entity_id: input_boolean.back_motion_mute
+    - condition: state
+      state: unknown
+      entity_id: input_boolean.back_motion_mute
+    - condition: state
+      entity_id: input_boolean.back_motion_mute
+      state: unavailable
+  - condition: state
+    state: 'off'
+    entity_id: input_boolean.back_motion_cooldown
+  - condition: and
+    conditions:
+    - condition: template
+      value_template: '{{ not is_state(''device_tracker.iphone_steven_bluetooth_bermuda_tracker'',
+        ''home'') }}'
+    - condition: time
+      after: '20:00:00'
+      before: 09:00:00
+  actions:
+  - event: BACK_MOTION_COOLDOWN
+    event_data: {}
+  - alias: Set up variables for the actions
+    variables:
+      action_mute_15: '{{ "MUTE_15_" ~ context.id }}'
+      action_mute_60: '{{ "MUTE_60_" ~ context.id }}'
+      action_mute_360: '{{ "MUTE_360_" ~ context.id }}'
+      action_mute_720: '{{ "MUTE_720_" ~ context.id }}'
+  - alias: Download snapshot
+    action: shell_command.download_snapshot
+    data:
+      id: '{{ trigger.payload_json[''after''][''id''] }}'
+    response_variable: download_response
+  - data:
+      title: Back garden entry camera
+      message: '{{ label | title }} detected'
+      data:
+        tag: '{{ id }}'
+        group: back-garden-entry
+        image: https://ha.madebysteven.nl/local/snapshots/{{ trigger.payload_json['after']['id']
+          }}.jpg
+        actions:
+        - action: '{{action_mute_15}}'
+          title: Mute for 15 minutes
+        - action: '{{action_mute_60}}'
+          title: Mute for 1 hour
+        - action: '{{action_mute_360}}'
+          title: Mute for 6 hours
+        - action: '{{action_mute_720}}'
+          title: Mute for 12 hours
+    action: notify.security
+    enabled: true
+  - alias: Wait for a response
+    timeout: 00:01:00
+    continue_on_timeout: false
+    wait_for_trigger:
+    - event_type: mobile_app_notification_action
+      event_data:
+        action: '{{ action_mute_15 }}'
+      trigger: event
+    - event_type: mobile_app_notification_action
+      event_data:
+        action: '{{ action_mute_60 }}'
+      trigger: event
+    - event_type: mobile_app_notification_action
+      event_data:
+        action: '{{ action_mute_360 }}'
+      trigger: event
+    - event_type: mobile_app_notification_action
+      event_data:
+        action: '{{ action_mute_720 }}'
+      trigger: event
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ wait.trigger.event.data.action == action_mute_15 }}'
+      sequence:
+      - event: BACK_MOTION_MUTE
+        event_data:
+          minutes: 15
+    - conditions:
+      - condition: template
+        value_template: '{{ wait.trigger.event.data.action == action_mute_60 }}'
+      sequence:
+      - event: BACK_MOTION_MUTE
+        event_data:
+          minutes: 60
+    - conditions:
+      - condition: template
+        value_template: '{{ wait.trigger.event.data.action == action_mute_360 }}'
+      sequence:
+      - event: BACK_MOTION_MUTE
+        event_data:
+          minutes: 360
+    - conditions:
+      - condition: template
+        value_template: '{{ wait.trigger.event.data.action == action_mute_720 }}'
+      sequence:
+      - event: BACK_MOTION_MUTE
+        event_data:
+          minutes: 720
+    default:
+    - event: BACK_MOTION_MUTE
+      event_data:
+        minutes: 0
+  mode: single
+  trace:
+    stored_traces: 50
+- id: '1746598868453'
+  alias: Bathroom mold indicator turn on fan
+  description: ''
+  triggers:
+  - trigger: numeric_state
+    entity_id:
+    - sensor.bathroom_mold_indicator
+    for:
+      hours: 0
+      minutes: 15
+      seconds: 0
+    above: 55
+  conditions:
+  - condition: time
+    before: '20:00:00'
+    after: 08:00:00
+  actions:
+  - action: switch.turn_on
+    metadata: {}
+    data: {}
+    target:
+      entity_id: switch.shellyplus2pm_bathroom_ventilation
+  mode: single
+- id: '1746598912855'
+  alias: Bathroom mold indicator turn off fan
+  description: ''
+  triggers:
+  - trigger: numeric_state
+    entity_id:
+    - sensor.bathroom_mold_indicator
+    for:
+      hours: 0
+      minutes: 15
+      seconds: 0
+    below: 55
+  - trigger: time
+    at: 06:00:00
+  - trigger: time
+    at: '22:30:00'
+  conditions: []
+  actions:
+  - action: switch.turn_off
+    metadata: {}
+    data: {}
+    target:
+      entity_id: switch.shellyplus2pm_bathroom_ventilation
+  mode: single
+- id: '1746652872317'
+  alias: Anthurium Bianco Status
+  description: ''
+  triggers:
+  - entity_id:
+    - sensor.anthurium_bianco_soil_moisture
+    for: 00:05:00
+    trigger: state
+  conditions:
+  - condition: template
+    value_template: '{{ not (trigger.to_state is none or trigger.from_state is none)
+      }}
+
+      '
+  actions:
+  - data:
+      timestamp: '{{ as_timestamp(now()) }}'
+    target:
+      entity_id: input_datetime.anthurium_bianco_last_updated
+    action: input_datetime.set_datetime
+  mode: single
+- id: '1746653466717'
+  alias: Crassula Rogersii Status
+  description: ''
+  triggers:
+  - entity_id:
+    - sensor.crassula_rogersii_soil_moisture
+    for: 00:05:00
+    trigger: state
+  conditions:
+  - condition: template
+    value_template: '{{ not (trigger.to_state is none or trigger.from_state is none)
+      }}
+
+      '
+  actions:
+  - data:
+      timestamp: '{{ as_timestamp(now()) }}'
+    target:
+      entity_id: input_datetime.crassula_roggersii_last_updated
+    action: input_datetime.set_datetime
+  mode: single
+- id: '1746653500615'
+  alias: Dracaena Fragrans Status
+  description: ''
+  triggers:
+  - entity_id:
+    - sensor.dracaena_fragrans_soil_moisture
+    for: 00:05:00
+    trigger: state
+  conditions:
+  - condition: template
+    value_template: '{{ not (trigger.to_state is none or trigger.from_state is none)
+      }}
+
+      '
+  actions:
+  - data:
+      timestamp: '{{ as_timestamp(now()) }}'
+    target:
+      entity_id: input_datetime.dracaena_fragrans_last_updated
+    action: input_datetime.set_datetime
+  mode: single
+- id: '1746653578333'
+  alias: Ficus Microcarpa Status
+  description: ''
+  triggers:
+  - entity_id:
+    - sensor.ficus_microcarpa_soil_moisture
+    for: 00:05:00
+    trigger: state
+  conditions:
+  - condition: template
+    value_template: '{{ not (trigger.to_state is none or trigger.from_state is none)
+      }}
+
+      '
+  actions:
+  - data:
+      timestamp: '{{ as_timestamp(now()) }}'
+    target:
+      entity_id: input_datetime.ficus_microcarpa_last_updated
+    action: input_datetime.set_datetime
+  mode: single
+- id: '1746653600562'
+  alias: Peperomia Argyreia Status
+  description: ''
+  triggers:
+  - entity_id:
+    - sensor.peperomia_argyreia_soil_moisture
+    for: 00:05:00
+    trigger: state
+  conditions:
+  - condition: template
+    value_template: '{{ not (trigger.to_state is none or trigger.from_state is none)
+      }}
+
+      '
+  actions:
+  - data:
+      timestamp: '{{ as_timestamp(now()) }}'
+    target:
+      entity_id: input_datetime.peperomia_argyreia_last_updated
+    action: input_datetime.set_datetime
+  mode: single
+- id: '1746781160623'
+  alias: Cleanup snapshots
+  description: ''
+  triggers:
+  - trigger: time_pattern
+    hours: /3
+  actions:
+  - action: shell_command.cleanup_snapshots
+    metadata: {}
+    data: {}
+- id: '1748639664739'
+  alias: Turn on front door and garden lights
+  description: ''
+  triggers:
+  - trigger: time_pattern
+    minutes: /5
+  conditions:
+  - condition: numeric_state
+    entity_id: sensor.light_sensor_front_garden_illuminance
+    below: 200
+  actions:
+  - delay:
+      hours: 0
+      minutes: 5
+      seconds: 0
+      milliseconds: 0
+  - condition: numeric_state
+    entity_id: sensor.light_sensor_front_garden_illuminance
+    below: 200
+  - action: light.turn_on
+    metadata: {}
+    data: {}
+    target:
+      entity_id:
+      - light.front_door
+      - light.front_garden
+  mode: single
+- id: '1748639821488'
+  alias: Turn off front door and garden lights
+  description: ''
+  triggers:
+  - trigger: numeric_state
+    entity_id:
+    - sensor.light_sensor_front_garden_illuminance
+    above: 400
+    for:
+      hours: 0
+      minutes: 5
+      seconds: 0
+  - trigger: sun
+    event: sunrise
+    offset: 00:30:00
+  conditions: []
+  actions:
+  - action: light.turn_off
+    metadata: {}
+    data: {}
+    target:
+      entity_id:
+      - light.front_door
+      - light.front_garden
+  mode: single
+- id: '1751543744586'
+  alias: Telegram bot that edits the last sent message
+  description: ''
+  triggers:
+  - trigger: event
+    event_type: telegram_callback
+    event_data:
+      command: /edit_msg
+  actions:
+  - action: telegram_bot.answer_callback_query
+    data:
+      callback_query_id: '{{ trigger.event.data.id }}'
+      message: Editing the message!
+      show_alert: true
+  - action: telegram_bot.edit_message
+    data:
+      message_id: '{{ trigger.event.data.message.message_id }}'
+      chat_id: '{{ trigger.event.data.chat_id }}'
+      title: '*Message edit*'
+      inline_keyboard:
+      - Edit message:/edit_msg, Don't:/do_nothing
+      - Remove this button:/remove_button
+      message: 'Callback received from {{ trigger.event.data.from_first }}. Message
+        id: {{ trigger.event.data.message.message_id }}. Data: {{ trigger.event.data.data|replace("_",
+        "\_") }}
+
+        '
+- id: '1751543764963'
+  alias: Telegram bot that repeats text
+  description: ''
+  triggers:
+  - trigger: event
+    event_type: telegram_text
+  actions:
+  - action: telegram_bot.send_message
+    data:
+      title: '*Dumb automation*'
+      target: '{{ trigger.event.data.user_id }}'
+      message: 'You said: {{ trigger.event.data.text }}'
+      disable_notification: true
+      inline_keyboard:
+      - Edit message:/edit_msg, Don't:/do_nothing
+      - Remove this button:/remove_button
+- id: '1751805773217'
+  alias: Turn off back garden lights
+  description: ''
+  triggers:
+  - trigger: numeric_state
+    entity_id:
+    - sensor.light_sensor_back_garden_illuminance
+    above: 400
+    for:
+      hours: 0
+      minutes: 5
+      seconds: 0
+  conditions: []
+  actions:
+  - action: light.turn_off
+    data: {}
+    target:
+      entity_id:
+      - light.back_garden_lights
+      - light.back_garden_lights_second
+  mode: single
+- id: '1753775759830'
+  alias: 'Alert: Living Room Back Sensors Unchanged'
+  description: ''
+  triggers:
+  - value_template: '{% set last_temp = states.sensor.living_room_back_temperature.last_changed
+      %} {% set last_hum = states.sensor.living_room_back_humidity.last_changed %}
+      {% set now = now() %} {{ (now - last_temp).total_seconds() > 3600 or (now -
+      last_hum).total_seconds() > 3600 }}
+
+      '
+    trigger: template
+  conditions:
+  - condition: template
+    value_template: '{% set last_temp = states.sensor.living_room_back_temperature.last_changed
+      %} {% set last_hum = states.sensor.living_room_back_humidity.last_changed %}
+      {% set now = now() %} {{ (now - last_temp).total_seconds() > 3600 or (now -
+      last_hum).total_seconds() > 3600 }}
+
+      '
+  actions:
+  - data:
+      message: '⚠️ The temperature or humidity sensor in the back of the living room
+        has not updated in over an hour. Please check the device or restart it if
+        needed.
+
+        '
+    action: notify.steven
+  mode: single
+- id: '1753775804753'
+  alias: 'Alert: Living Room Front Sensors Unchanged'
+  description: ''
+  triggers:
+  - value_template: '{% set last_temp = states.sensor.living_room_front_temperature.last_changed
+      %} {% set last_hum = states.sensor.living_room_front_humidity.last_changed %}
+      {% set now = now() %} {{ (now - last_temp).total_seconds() > 3600 or (now -
+      last_hum).total_seconds() > 3600 }}
+
+      '
+    trigger: template
+  conditions:
+  - condition: template
+    value_template: '{% set last_temp = states.sensor.living_room_front_temperature.last_changed
+      %} {% set last_hum = states.sensor.living_room_front_humidity.last_changed %}
+      {% set now = now() %} {{ (now - last_temp).total_seconds() > 3600 or (now -
+      last_hum).total_seconds() > 3600 }}
+
+      '
+  actions:
+  - data:
+      message: '⚠️ The temperature or humidity sensor in the front of the living room
+        has not updated in over an hour. Please check the device or restart it if
+        needed.
+
+        '
+    action: notify.steven
+  mode: single
+- id: '1753775983218'
+  alias: 'Alert: Bedroom Sensors Unchanged'
+  description: ''
+  triggers:
+  - value_template: '{% set last_temp = states.sensor.bedroom_temperature.last_changed
+      %} {% set last_hum = states.sensor.bedroom_humidity.last_changed %} {% set now
+      = now() %} {{ (now - last_temp).total_seconds() > 3600 or (now - last_hum).total_seconds()
+      > 3600 }}
+
+      '
+    trigger: template
+  conditions:
+  - condition: template
+    value_template: '{% set last_temp = states.sensor.bedroom_temperature.last_changed
+      %} {% set last_hum = states.sensor.bedroom_humidity.last_changed %} {% set now
+      = now() %} {{ (now - last_temp).total_seconds() > 3600 or (now - last_hum).total_seconds()
+      > 3600 }}
+
+      '
+  actions:
+  - data:
+      message: '⚠️ The temperature or humidity sensor in the bedroom has not updated
+        in over an hour. Please check the device or restart it if needed.
+
+        '
+    action: notify.steven
+  mode: single
+- id: '1753776080739'
+  alias: 'Alert: Scott''s Bedroom Sensors Unchanged'
+  description: ''
+  triggers:
+  - value_template: '{% set last_temp = states.sensor.bedroom_scott_temperature.last_changed
+      %} {% set last_hum = states.sensor.bedroom_scott_humidity.last_changed %} {%
+      set now = now() %} {{ (now - last_temp).total_seconds() > 3600 or (now - last_hum).total_seconds()
+      > 3600 }}
+
+      '
+    trigger: template
+  conditions:
+  - condition: template
+    value_template: '{% set last_temp = states.sensor.bedroom_scott_temperature.last_changed
+      %} {% set last_hum = states.sensor.bedroom_scott_humidity.last_changed %} {%
+      set now = now() %} {{ (now - last_temp).total_seconds() > 3600 or (now - last_hum).total_seconds()
+      > 3600 }}
+
+      '
+  actions:
+  - data:
+      message: '⚠️ The temperature or humidity sensor in Scott''s bedroom has not
+        updated in over an hour. Please check the device or restart it if needed.
+
+        '
+    action: notify.steven
+  mode: single
+- id: '1753776139492'
+  alias: 'Alert: Marlou''s Bedroom Sensors Unchanged'
+  description: ''
+  triggers:
+  - value_template: '{% set last_temp = states.sensor.bedroom_marlou_temperature.last_changed
+      %} {% set last_hum = states.sensor.bedroom_marlou_humidity.last_changed %} {%
+      set now = now() %} {{ (now - last_temp).total_seconds() > 3600 or (now - last_hum).total_seconds()
+      > 3600 }}
+
+      '
+    trigger: template
+  conditions:
+  - condition: template
+    value_template: '{% set last_temp = states.sensor.bedroom_marlou_temperature.last_changed
+      %} {% set last_hum = states.sensor.bedroom_marlou_humidity.last_changed %} {%
+      set now = now() %} {{ (now - last_temp).total_seconds() > 3600 or (now - last_hum).total_seconds()
+      > 3600 }}
+
+      '
+  actions:
+  - data:
+      message: '⚠️ The temperature or humidity sensor in Marlou''s bedroom has not
+        updated in over an hour. Please check the device or restart it if needed.
+
+        '
+    action: notify.steven
+  mode: single
+- id: '1753791765113'
+  alias: Set CO2 Gauge Color on HASP
+  description: ''
+  triggers:
+  - entity_id: sensor.attic_air_quality_co2
+    trigger: state
+  conditions: []
+  actions:
+  - action: openhasp.command
+    metadata: {}
+    data:
+      keyword: p1b6.fg_color
+      parameters: '{{ states(''sensor.attic_co2_gauge_color'') }}'
+    target:
+      entity_id: openhasp.dashboard
+  - condition: template
+    value_template: '{{ states(''sensor.attic_air_quality_co2'') | float > 1500 }}
+
+      '
+  - action: openhasp.wakeup
+    data: {}
+    target:
+      entity_id: openhasp.dashboard
+  - action: light.turn_on
+    data:
+      brightness_pct: 75
+    target:
+      entity_id: light.dashboard_backlight
+  mode: single
+- id: '1754031821222'
+  alias: When attic occupied turn display brightness to 25%
+  description: ''
+  triggers:
+  - trigger: state
+    entity_id:
+    - binary_sensor.attic_motion_occupancy
+    to: 'on'
+  conditions: []
+  actions:
+  - action: light.turn_on
+    metadata: {}
+    data:
+      brightness_pct: 20
+    target:
+      entity_id: light.dashboard_backlight
+  mode: single
+- id: '1754244565208'
+  alias: Notify dishwasher top 3 moments
+  triggers:
+  - at: '18:00:00'
+    trigger: time
+  - at: 06:00:00
+    trigger: time
+  actions:
+  - data:
+      title: Dishwasher coming 12 hours
+      message: '{{ states(''sensor.dishwasher_top_3_times_text'') | replace('', '',
+        ''\n'') }}'
+    action: notify.family
+  mode: single
+- id: '1754748914989'
+  alias: Cancel doorbell when door opened
+  description: ''
+  triggers:
+  - trigger: state
+    entity_id:
+    - binary_sensor.front_door_contact
+    to: 'on'
+  conditions:
+  - condition: state
+    entity_id: switch.doorbell
+    state: 'on'
+  actions: []
+  mode: single
+- id: '1756487858527'
+  alias: Turn off Scott’s ambient light
+  description: ''
+  triggers:
+  - trigger: state
+    entity_id:
+    - light.bedroom_scott_ambient
+    to: 'on'
+    for:
+      hours: 2
+      minutes: 0
+      seconds: 0
+    enabled: false
+  - trigger: time
+    at: input_datetime.scott_ambient_light_end_time
+    enabled: true
+  conditions: []
+  actions:
+  - action: light.turn_off
+    metadata: {}
+    data: {}
+    target:
+      entity_id: light.bedroom_scott_ambient
+  mode: single
+- id: '1756590079367'
+  alias: Scott event detection
+  description: ''
+  triggers:
+  - trigger: mqtt
+    topic: frigate/events
+    id: frigate-event
+    payload: scott
+    value_template: '{{ value_json[''after''][''camera''] }}'
+    variables:
+      after_zones: '{{ trigger.payload_json[''after''][''entered_zones''] }}'
+      before_zones: '{{ trigger.payload_json[''before''][''entered_zones''] }}'
+      camera: '{{ trigger.payload_json[''after''][''camera''] }}'
+      id: '{{ trigger.payload_json[''after''][''id''] }}'
+      label: '{{ trigger.payload_json[''after''][''label''] }}'
+      score: '{{ trigger.payload_json[''after''][''score''] }}'
+      time_clip_start: '{{ trigger.payload_json[''after''][''start_time''] - 10.0
+        }}'
+    enabled: true
+  conditions:
+  - condition: or
+    conditions:
+    - condition: template
+      value_template: '{{ trigger.payload_json[''type''] == ''new'' }}'
+      enabled: true
+    - condition: template
+      value_template: '{{ before_zones | length == 0 }}'
+      enabled: true
+    enabled: true
+  - condition: state
+    state: 'off'
+    entity_id: input_boolean.front_motion_cooldown
+  actions:
+  - alias: Download snapshot
+    action: shell_command.download_snapshot
+    data:
+      id: '{{ trigger.payload_json[''after''][''id''] }}'
+    response_variable: download_response
+  mode: single
+  trace:
+    stored_traces: 50
+- id: '1756796998337'
+  alias: Appointment message display dashboard
+  description: ''
+  triggers:
+  - event: start
+    entity_id: calendar.stevendejnl_gmail_com
+    offset: -0:5:0
+    trigger: calendar
+  - event: start
+    entity_id: calendar.sdejong_cloudsuite_com
+    offset: -0:5:0
+    trigger: calendar
+  actions:
+  - action: mqtt.publish
+    metadata: {}
+    data:
+      topic: hasp/dashboard/command/jsonl
+      qos: '0'
+      payload: '{"page":0,"id":5,"obj":"msgbox","text":"{{ trigger.calendar_event.summary
+        }} at {{ as_timestamp(trigger.calendar_event.start) | timestamp_custom(''%H:%M'')
+        }}","options":["Close"]}'
+  - action: light.turn_on
+    metadata: {}
+    data:
+      brightness_pct: 20
+    target:
+      entity_id: light.dashboard_backlight
+  - delay:
+      hours: 0
+      minutes: 5
+      seconds: 0
+      milliseconds: 0
+  - action: light.turn_on
+    metadata: {}
+    data:
+      brightness_pct: 20
+    target:
+      entity_id: light.dashboard_backlight
+  - action: mqtt.publish
+    metadata: {}
+    data:
+      topic: hasp/dashboard/command/p0b5.bg_color
+      qos: '0'
+      payload: '#B00000'
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 1
+      milliseconds: 30
+  - action: mqtt.publish
+    metadata: {}
+    data:
+      topic: hasp/dashboard/command/p0b5.bg_color
+      qos: '0'
+      payload: '#000000'
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 1
+      milliseconds: 30
+  - action: mqtt.publish
+    metadata: {}
+    data:
+      topic: hasp/dashboard/command/p0b5.bg_color
+      qos: '0'
+      payload: '#B00000'
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 1
+      milliseconds: 30
+  - action: mqtt.publish
+    metadata: {}
+    data:
+      topic: hasp/dashboard/command/p0b5.bg_color
+      qos: '0'
+      payload: '#000000'
+  - delay:
+      hours: 0
+      minutes: 5
+      seconds: 0
+      milliseconds: 0
+  - action: mqtt.publish
+    metadata: {}
+    data:
+      topic: hasp/dashboard/command/p0b5.delete
+      qos: '0'
+- id: '1756804885558'
+  alias: Doorbell dashboard message
+  description: ''
+  triggers:
+  - trigger: state
+    entity_id:
+    - binary_sensor.front_door_visitor
+    to: 'on'
+  conditions: []
+  actions:
+  - action: mqtt.publish
+    metadata: {}
+    data:
+      topic: hasp/dashboard/command/jsonl
+      qos: '0'
+      payload: '{"page":0,"id":10,"obj":"msgbox","text":"Doorbell!","options":["Close"]}'
+  - action: light.turn_on
+    metadata: {}
+    data:
+      brightness_pct: 20
+    target:
+      entity_id: light.dashboard_backlight
+  - action: mqtt.publish
+    metadata: {}
+    data:
+      topic: hasp/dashboard/command/p0b10.bg_color
+      qos: '0'
+      payload: '#B00000'
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 1
+      milliseconds: 30
+  - action: mqtt.publish
+    metadata: {}
+    data:
+      topic: hasp/dashboard/command/p0b10.bg_color
+      qos: '0'
+      payload: '#000000'
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 1
+      milliseconds: 30
+  - action: mqtt.publish
+    metadata: {}
+    data:
+      topic: hasp/dashboard/command/p0b10.bg_color
+      qos: '0'
+      payload: '#B00000'
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 1
+      milliseconds: 30
+  - action: mqtt.publish
+    metadata: {}
+    data:
+      topic: hasp/dashboard/command/p0b10.bg_color
+      qos: '0'
+      payload: '#000000'
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 1
+      milliseconds: 30
+  - action: mqtt.publish
+    metadata: {}
+    data:
+      topic: hasp/dashboard/command/p0b10.bg_color
+      qos: '0'
+      payload: '#B00000'
+  - action: light.turn_on
+    metadata: {}
+    data:
+      brightness_pct: 20
+    target:
+      entity_id: light.dashboard_backlight
+  - delay:
+      hours: 0
+      minutes: 5
+      seconds: 0
+      milliseconds: 0
+  - action: mqtt.publish
+    metadata: {}
+    data:
+      topic: hasp/dashboard/command/p0b10.delete
+      qos: '0'
+  mode: single
+- id: '1756882897025'
+  alias: Reset keep dashboard display on toggle
+  description: ''
+  triggers:
+  - trigger: state
+    entity_id:
+    - input_boolean.keep_dashboard_display_on
+    to: 'on'
+    for:
+      hours: 8
+      minutes: 0
+      seconds: 0
+  - trigger: time
+    at: 00:00:00
+  conditions: []
+  actions:
+  - action: input_boolean.turn_off
+    metadata: {}
+    data: {}
+    target:
+      entity_id: input_boolean.keep_dashboard_display_on
+  mode: single
+- id: '1756882980491'
+  alias: Turn on dashboard display based on toggle
+  description: ''
+  triggers:
+  - trigger: state
+    entity_id:
+    - input_boolean.keep_dashboard_display_on
+    to: 'on'
+  conditions: []
+  actions:
+  - action: light.turn_on
+    metadata: {}
+    data:
+      brightness_pct: 25
+    target:
+      entity_id: light.dashboard_backlight
+  mode: single
+- id: '1756884522223'
+  alias: Check to keep dashboard display on
+  description: ''
+  triggers:
+  - trigger: state
+    entity_id:
+    - light.dashboard_backlight
+    to: 'off'
+  conditions:
+  - condition: state
+    entity_id: input_boolean.keep_dashboard_display_on
+    state: 'on'
+  actions:
+  - action: light.turn_on
+    metadata: {}
+    data:
+      brightness_pct: 25
+    target:
+      entity_id: light.dashboard_backlight
+  mode: single
+- id: '1757139845291'
+  alias: Washing machine emptied reminder
+  description: ''
+  triggers:
+  - trigger: time_pattern
+    hours: /1
+  conditions:
+  - condition: state
+    entity_id: input_boolean.washing_machine_emptied
+    state: 'on'
+  actions:
+  - action: notify.family
+    metadata: {}
+    data:
+      message: Please empty the washing machine.
+      title: Washing machine
+      data:
+        actions:
+        - action: EMPTY_CONFIRMED
+          title: I emptied it
+  mode: single
+- id: '1757140148000'
+  alias: Washing machine emptied confirm
+  description: ''
+  triggers:
+  - trigger: event
+    event_type: mobile_app_notification_action
+    event_data:
+      action: EMPTY_CONFIRMED
+  conditions: []
+  actions:
+  - action: input_boolean.turn_off
+    metadata: {}
+    data: {}
+    target:
+      entity_id: input_boolean.washing_machine_emptied
+  mode: single
+- id: '1758978118049'
+  alias: Bedroom Scott alarm mute reset
+  description: ''
+  triggers:
+  - trigger: state
+    entity_id:
+    - input_boolean.bedroom_scott_alarm_mute
+    to: 'on'
+    for:
+      hours: 0
+      minutes: 30
+      seconds: 0
+  - trigger: homeassistant
+    event: start
+  conditions: []
+  actions:
+  - action: input_boolean.turn_off
+    metadata: {}
+    data: {}
+    target:
+      entity_id: input_boolean.bedroom_scott_alarm_mute
+  mode: single
+- id: '1759900748204'
+  alias: Purge entities weekly
+  description: ''
+  triggers:
+  - trigger: time_pattern
+    hours: '0'
+  conditions: []
+  actions:
+  - action: recorder.purge_entities
+    metadata: {}
+    data:
+      keep_days: 7
+      entity_id:
+      - sensor.nordpool_kwh_nl_eur_3_10_021
+  mode: single
+- id: '1761595959250'
+  alias: Update sql entities every 5 minutes
+  description: ''
+  triggers:
+  - trigger: time_pattern
+    minutes: /5
+  conditions: []
+  actions:
+  - action: homeassistant.update_entity
+    metadata: {}
+    data:
+      entity_id:
+      - sensor.living_room_front_temperature_last_year
+      - sensor.living_room_back_temperature_last_year
+      - sensor.kitchen_temperature_last_year
+      - sensor.dining_room_temperature_last_year
+      - sensor.bedroom_temperature_last_year
+      - sensor.bedroom_scott_temperature_last_year
+      - sensor.bedroom_marlou_temperature_last_year
+      - sensor.bathroom_temperature_last_year
+      - sensor.attic_temperature_last_year
+      - sensor.outdoor_temperature_last_year
+  mode: single
+- id: '1761932346081'
+  alias: Halloween mode lights
+  description: 'Alternating random flicker effect for front door light, doorbell LED,
+    and two garden path lights, only on Halloween night
+
+    '
+  triggers:
+  - trigger: time_pattern
+    seconds: /4
+  conditions:
+  - condition: template
+    value_template: "{{ now().month == 10 and now().day == 31 and\n   now().hour >=
+      18 and now().hour < 23 }}\n"
+    enabled: true
+  actions:
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ range(0, 10) | random < 4 }}'
+      sequence:
+      - variables:
+          active_entity: "{{\n  [\n    'light.front_door',\n    'select.front_door_doorbell_led',\n
+            \   'light.front_garden_path_light_street_side',\n    'light.front_garden_path_light_street_side'\n
+            \ ] | random\n}}\n"
+      - choose:
+        - conditions:
+          - condition: template
+            value_template: '{{ active_entity == ''light.front_door'' }}'
+          sequence:
+          - repeat:
+              count: '{{ range(2, 5) | random }}'
+              sequence:
+              - action: light.turn_off
+                target:
+                  entity_id: light.front_door
+              - delay:
+                  milliseconds: '{{ range(100, 400) | random }}'
+              - action: light.turn_on
+                target:
+                  entity_id: light.front_door
+              - delay:
+                  milliseconds: '{{ range(100, 600) | random }}'
+        - conditions:
+          - condition: template
+            value_template: '{{ active_entity == ''select.front_door_doorbell_led''
+              }}'
+          sequence:
+          - repeat:
+              count: '{{ range(2, 4) | random }}'
+              sequence:
+              - action: select.select_option
+                target:
+                  entity_id: select.front_door_doorbell_led
+                data:
+                  option: stayoff
+              - delay:
+                  milliseconds: '{{ range(150, 500) | random }}'
+              - action: select.select_option
+                target:
+                  entity_id: select.front_door_doorbell_led
+                data:
+                  option: alwaysonatnight
+              - delay:
+                  milliseconds: '{{ range(200, 700) | random }}'
+        - conditions:
+          - condition: template
+            value_template: "{{ active_entity ==\n   'light.front_garden_path_light_street_side'
+              }}\n"
+          sequence:
+          - repeat:
+              count: '{{ range(2, 6) | random }}'
+              sequence:
+              - action: light.turn_off
+                target:
+                  entity_id: light.front_garden_path_light_street_side
+              - delay:
+                  milliseconds: '{{ range(80, 350) | random }}'
+              - action: light.turn_on
+                target:
+                  entity_id: light.front_garden_path_light_street_side
+              - delay:
+                  milliseconds: '{{ range(100, 500) | random }}'
+        - conditions:
+          - condition: template
+            value_template: "{{ active_entity ==\n   'light.front_garden_path_light_street_side'
+              }}\n"
+          sequence:
+          - repeat:
+              count: '{{ range(3, 7) | random }}'
+              sequence:
+              - action: light.turn_off
+                target:
+                  entity_id: light.front_garden_path_light_street_side
+              - delay:
+                  milliseconds: '{{ range(120, 400) | random }}'
+              - action: light.turn_on
+                target:
+                  entity_id: light.front_garden_path_light_street_side
+              - delay:
+                  milliseconds: '{{ range(150, 550) | random }}'
+  mode: restart
+- id: '1762432379581'
+  alias: Heating daily
+  description: ''
+  triggers:
+  - entity_id:
+    - sensor.active_heating_schedule
+    to: Daily
+    trigger: state
+  conditions: []
+  actions:
+  - target:
+      entity_id:
+      - climate.thermostat
+      - climate.all_radiators
+    action: climate.turn_on
+  - variables:
+      target_temp: '{{ states(''input_number.heating_daily_target'') | float(0) }}'
+      radiators: "{{ state_attr('group.all_radiators', 'entity_id')\n   if state_attr('group.all_radiators',
+        'entity_id') is not none\n   else (state_attr('climate.all_radiators', 'entity_id')\n
+        \        if state_attr('climate.all_radiators', 'entity_id') is not none\n
+        \        else []) }}"
+  - repeat:
+      for_each: '{{ radiators }}'
+      sequence:
+      - variables:
+          radiator_id: '{{ repeat.item }}'
+          room_name: '{{ radiator_id.split(''.trv_better_'')[1] if ''.trv_better_''
+            in radiator_id else radiator_id }}'
+          keep_open_boolean: input_boolean.trv_{{ room_name }}_keep_open
+      - choose:
+        - conditions:
+          - condition: template
+            value_template: '{{ not is_state(keep_open_boolean, ''on'') }}'
+          sequence:
+          - target:
+              entity_id: '{{ radiator_id }}'
+            data:
+              temperature: '{{ target_temp }}'
+            action: climate.set_temperature
+        - conditions:
+          - condition: template
+            value_template: '{{ is_state(keep_open_boolean, ''on'') }}'
+          sequence: []
+  - target:
+      entity_id: climate.thermostat
+    data:
+      temperature: '{{ target_temp }}'
+    action: climate.set_temperature
+  - if:
+    - condition: state
+      entity_id: input_boolean.holiday_mode
+      state:
+      - 'off'
+    then:
+    - data:
+        value: 16
+      target:
+        entity_id: input_number.heating_nightly_target
+      action: input_number.set_value
+  mode: single
+- id: '1762432547675'
+  alias: Heating nightly
+  description: ''
+  triggers:
+  - entity_id:
+    - sensor.active_heating_schedule
+    to: Nightly
+    trigger: state
+  conditions: []
+  actions:
+  - data:
+      title: Heating
+      message: Nightly on {{ states('input_number.heating_nightly_target') }}
+    action: notify.steven
+    enabled: false
+  - target:
+      entity_id:
+      - climate.thermostat
+      - climate.all_radiators
+    action: climate.turn_on
+  - variables:
+      target_temp: '{{ states(''input_number.heating_nightly_target'') | float(0)
+        }}'
+      radiators: "{{ state_attr('group.all_radiators', 'entity_id')\n   if state_attr('group.all_radiators',
+        'entity_id') is not none\n   else (state_attr('climate.all_radiators', 'entity_id')\n
+        \        if state_attr('climate.all_radiators', 'entity_id') is not none\n
+        \        else []) }}"
+  - repeat:
+      for_each: '{{ radiators }}'
+      sequence:
+      - variables:
+          radiator_id: '{{ repeat.item }}'
+          room_name: '{{ radiator_id.split(''.trv_better_'')[1] if ''.trv_better_''
+            in radiator_id else radiator_id }}'
+          keep_open_boolean: input_boolean.trv_{{ room_name }}_keep_open
+      - choose:
+        - conditions:
+          - condition: template
+            value_template: '{{ not is_state(keep_open_boolean, ''on'') }}'
+          sequence:
+          - target:
+              entity_id: '{{ radiator_id }}'
+            data:
+              temperature: '{{ target_temp }}'
+            action: climate.set_temperature
+        - conditions:
+          - condition: template
+            value_template: '{{ is_state(keep_open_boolean, ''on'') }}'
+          sequence: []
+  - target:
+      entity_id: climate.thermostat
+    data:
+      temperature: '{{ target_temp }}'
+    action: climate.set_temperature
+  - if:
+    - condition: state
+      entity_id: input_boolean.holiday_mode
+      state:
+      - 'off'
+    then:
+    - data:
+        value: 18
+      target:
+        entity_id: input_number.heating_daily_target
+      action: input_number.set_value
+  mode: single
+- id: '1762433383695'
+  alias: Check TRV keep-open hourly
+  description: Controleer elk uur of TRV keep-open booleans aanstaan en open die TRV
+    volledig
+  triggers:
+  - minutes: 0
+    trigger: time_pattern
+  conditions: []
+  actions:
+  - variables:
+      max_open_temp: 35
+      radiators: "{{ state_attr('climate.all_radiators', 'entity_id')\n   if state_attr('climate.all_radiators',
+        'entity_id') is not none\n   else (state_attr('group.all_radiators', 'entity_id')\n
+        \        if state_attr('group.all_radiators', 'entity_id') is not none\n         else
+        []) }}"
+  - repeat:
+      for_each: '{{ radiators }}'
+      sequence:
+      - variables:
+          radiator_id: '{{ repeat.item }}'
+          base_name: '{{ radiator_id.split(''.'')[1] if ''.'' in radiator_id else
+            radiator_id }}'
+          room_base: '{{ base_name.replace(''trv_better_'', '''') }}'
+          room_option1: '{{ room_base.replace(''living_'', ''living_room_'') }}'
+          room_option2: '{{ room_base }}'
+          boolean1: input_boolean.trv_{{ room_option1 }}_keep_open
+          boolean2: input_boolean.trv_{{ room_option2 }}_keep_open
+          candidate_trv1: climate.trv_{{ room_option1 }}
+          candidate_trv2: climate.trv_{{ room_option2 }}
+          candidate_trv3: '{{ radiator_id.replace(''trv_better'', ''trv'') }}'
+          trv_to_set: "{{ candidate_trv1 if states(candidate_trv1) != 'unknown'\n
+            \  else (candidate_trv2 if states(candidate_trv2) != 'unknown'\n         else
+            candidate_trv3) }}"
+      - choose:
+        - conditions:
+          - condition: template
+            value_template: '{{ is_state(boolean1, ''on'') or is_state(boolean2, ''on'')
+              }}'
+          sequence:
+          - target:
+              entity_id: '{{ trv_to_set }}'
+            data:
+              temperature: '{{ max_open_temp }}'
+            action: climate.set_temperature
+          - data:
+              title: TRV opened by automation
+              message: '{{ trv_to_set }} set to {{ max_open_temp }}° because {{ boolean1
+                }} or {{ boolean2 }} is on.'
+            action: notify.steven
+            enabled: false
+  mode: single
+- id: '1762434540811'
+  alias: Sync TRV calibrations every 15 minutes
+  description: Every 15 minutes compare each TRV's reported temperature with the room
+    temperature sensor and update the corresponding local temperature calibration
+    number so the TRV reading matches the room sensor. Values are clamped to the valid
+    range of the number entity (-9.0 ..  9.0) to avoid "value out of range" errors.
+  triggers:
+  - minutes: /15
+    trigger: time_pattern
+  conditions: []
+  actions:
+  - repeat:
+      for_each: '{{ mappings }}'
+      sequence:
+      - variables:
+          trv_entity: '{{ repeat.item.trv }}'
+          room_sensor: '{{ repeat.item.sensor }}'
+          calibration_entity: '{{ repeat.item.calibration }}'
+          open_entity: '{{ repeat.item.open }}'
+      - choose:
+        - conditions:
+          - condition: template
+            value_template: "{{ state_attr(trv_entity, 'current_temperature') is not
+              none\n   and not is_state(room_sensor, 'unknown')\n   and not is_state(room_sensor,
+              'unavailable')\n   and states(room_sensor) != '' }}"
+          sequence:
+          - variables:
+              room_temp: '{{ states(room_sensor) | float(0) }}'
+              trv_temp: '{{ state_attr(trv_entity, ''current_temperature'') | float(0)
+                }}'
+              current_cal: '{{ states(calibration_entity) | float(0) }}'
+              raw_new_cal: '{{ (room_temp - trv_temp) | round(1) }}'
+              new_cal_clamped: '{{ [ -9.0, [ ((room_temp - trv_temp) | round(1)),
+                9.0 ] | min ] | max }}'
+          - choose:
+            - conditions:
+              - condition: and
+                conditions:
+                - condition: template
+                  value_template: '{{ (((room_temp - trv_temp) | round(1) - current_cal)
+                    | abs) > 0.1 }}'
+                - condition: template
+                  value_template: '{{ states(open_entity) == ''off'' }}'
+              sequence:
+              - target:
+                  entity_id: '{{ calibration_entity }}'
+                data:
+                  value: '{{ new_cal_clamped }}'
+                action: number.set_value
+              - data:
+                  title: TRV calibration updated
+                  message: '{{ calibration_entity }} set to {{ new_cal_clamped }}°.
+                    Raw required calibration was {{ raw_new_cal }}°.  {{ ''Value was
+                    clamped to allowed range (-9..9).'' if (raw_new_cal != new_cal_clamped)
+                    else '''' }} (room {{ room_sensor }}={{ room_temp }}°, trv {{
+                    trv_entity }}={{ trv_temp }}°, old cal={{ current_cal }}°)'
+                action: notify.steven
+                enabled: false
+        - conditions: []
+          sequence:
+          - variables:
+              hours_since_last_update: "{% set last_changed = state_attr(trv_entity,
+                'last_changed') %} {% if last_changed %}\n  {{ ((as_timestamp(now())
+                - as_timestamp(last_changed)) / 3600) | round(1) }}\n{% else %}\n
+                \ 999\n{% endif %}"
+          - condition: template
+            value_template: '{{ hours_since_last_update >= 6 }}'
+          - data:
+              title: TRV calibration - missing data
+              message: Cannot read {{ repeat.item.trv }} current_temperature or {{
+                repeat.item.sensor }}. TRV current_temperature or room sensor is missing/unavailable.
+            action: notify.steven
+            enabled: false
+  variables:
+    mappings:
+    - trv: climate.trv_living_room_front
+      sensor: sensor.living_room_front_temperature
+      calibration: number.trv_living_room_front_local_temperature_calibration
+      open: input_boolean.trv_living_room_front_keep_open
+    - trv: climate.trv_living_room_back
+      sensor: sensor.living_room_back_temperature
+      calibration: number.trv_living_room_back_local_temperature_calibration
+      open: input_boolean.trv_living_room_back_keep_open
+    - trv: climate.trv_dining_room
+      sensor: sensor.dining_room_temperature
+      calibration: number.trv_dining_room_local_temperature_calibration
+      open: input_boolean.trv_dining_room_keep_open
+    - trv: climate.trv_bedroom
+      sensor: sensor.bedroom_temperature
+      calibration: number.trv_bedroom_local_temperature_calibration
+      open: input_boolean.trv_bedroom_keep_open
+    - trv: climate.trv_bedroom_scott
+      sensor: sensor.bedroom_scott_temperature
+      calibration: number.trv_bedroom_scott_local_temperature_calibration
+      open: input_boolean.trv_bedroom_scott_keep_open
+    - trv: climate.trv_bedroom_marlou
+      sensor: sensor.bedroom_marlou_temperature
+      calibration: number.trv_bedroom_marlou_local_temperature_calibration
+      open: input_boolean.trv_bedroom_marlou_keep_open
+  mode: single
+- id: '1762873199192'
+  alias: Notify price drop TP-Link TL-SG108 switch
+  description: ''
+  triggers:
+  - entity_id: sensor.tweakers_tp_link_tl_sg108_switch_current_price
+    trigger: state
+  conditions:
+  - condition: template
+    value_template: "{{ states('sensor.tweakers_tp_link_tl_sg108_switch_current_price')|float(0)\n
+      \  < states('input_number.tp_link_tl_sg108_previous_price')|float(99999) }}\n"
+  actions:
+  - data:
+      message: 'TP-Link TL-SG108 switch - price drop!   Old price: €{{ states(''input_number.tp_link_tl_sg108_previous_price'')
+        }}   New price: €{{ states(''sensor.tweakers_tp_link_tl_sg108_switch_current_price'')
+        }}
+
+        '
+      data:
+        actions:
+        - action: open_prices_dashboard
+          title: Show price chart
+          uri: /dashboard-homelab/prices/
+    action: notify.steven
+  - data:
+      entity_id: input_number.tp_link_tl_sg108_previous_price
+      value: '{{ states(''sensor.tweakers_tp_link_tl_sg108_switch_current_price'')|float(0)
+        }}'
+    action: input_number.set_value
+  mode: single
+- id: '1762873248678'
+  alias: Notify price drop TP-Link Deco X50 (1-pack)
+  description: ''
+  triggers:
+  - entity_id: sensor.tweakers_tp_link_deco_x50_1_pack_current_price
+    trigger: state
+  conditions:
+  - condition: template
+    value_template: "{{ states('sensor.tweakers_tp_link_deco_x50_1_pack_current_price')|float(0)\n
+      \  < states('input_number.tp_link_deco_x50_1_pack_previous_price')|float(99999)
+      }}\n"
+  actions:
+  - data:
+      message: 'TP-Link Deco X50 (1-pack) - price drop!   Old price: €{{ states(''input_number.tp_link_deco_x50_1_pack_previous_price'')
+        }}   New price: €{{ states(''sensor.tweakers_tp_link_deco_x50_1_pack_current_price'')
+        }}
+
+        '
+      data:
+        actions:
+        - action: open_prices_dashboard
+          title: Show price chart
+          uri: /dashboard-homelab/prices/
+    action: notify.steven
+  - data:
+      entity_id: input_number.tp_link_deco_x50_1_pack_previous_price
+      value: '{{ states(''sensor.tweakers_tp_link_deco_x50_1_pack_current_price'')|float(0)
+        }}'
+    action: input_number.set_value
+  mode: single
+- id: '1762873269670'
+  alias: Notify price drop Kärcher SC 3 Easyfix
+  description: ''
+  triggers:
+  - entity_id: sensor.tweakers_karcher_sc_3_easyfix_current_price
+    trigger: state
+  conditions:
+  - condition: template
+    value_template: "{{ states('sensor.tweakers_karcher_sc_3_easyfix_current_price')|float(0)\n
+      \  < states('input_number.karcher_sc_3_easyfix_previous_price')|float(99999)
+      }}\n"
+  actions:
+  - data:
+      message: 'Kärcher SC 3 Easyfix - price drop!   Old price: €{{ states(''input_number.karcher_sc_3_easyfix_previous_price'')
+        }}   New price: €{{ states(''sensor.tweakers_karcher_sc_3_easyfix_current_price'')
+        }}
+
+        '
+      data:
+        actions:
+        - action: open_prices_dashboard
+          title: Show price chart
+          uri: /dashboard-homelab/prices/
+    action: notify.steven
+  - data:
+      entity_id: input_number.karcher_sc_3_easyfix_previous_price
+      value: '{{ states(''sensor.tweakers_karcher_sc_3_easyfix_current_price'')|float(0)
+        }}'
+    action: input_number.set_value
+  mode: single
+- id: '1763110790753'
+  alias: Turn off hallway light
+  description: ''
+  triggers:
+  - trigger: state
+    entity_id:
+    - light.shellyplus1pm_hallway_downstairs
+    for:
+      hours: 0
+      minutes: 5
+      seconds: 0
+    to:
+    - 'on'
+  conditions: []
+  actions:
+  - action: light.turn_off
+    metadata: {}
+    data: {}
+    target:
+      entity_id: light.shellyplus1pm_hallway_downstairs
+  mode: single
+- id: '1763406416213'
+  alias: Starkvind back to auto after manual speed change
+  description: When Starkvind is switched from auto to a manual speed, wait 5 minutes
+    and set it back to auto unless it was already set back manually.
+  triggers:
+  - entity_id: fan.starkvind
+    attribute: preset_mode
+    from: auto
+    to:
+    trigger: state
+  conditions: []
+  actions:
+  - delay: 00:05:00
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: fan.starkvind
+        attribute: preset_mode
+        state: auto
+      sequence: []
+    default:
+    - target:
+        entity_id: fan.starkvind
+      data:
+        preset_mode: auto
+      action: fan.set_preset_mode
+  mode: restart
+- id: '1763409021775'
+  alias: Heating nightly target changed
+  description: ''
+  triggers:
+  - trigger: state
+    entity_id:
+    - input_number.heating_nightly_target
+  conditions:
+  - condition: state
+    entity_id: sensor.active_heating_schedule
+    state: Nightly
+  actions:
+  - action: climate.turn_on
+    target:
+      entity_id:
+      - climate.thermostat
+      - climate.all_radiators
+    data: {}
+  - action: climate.set_temperature
+    metadata: {}
+    data:
+      temperature: '{{ states(''input_number.heating_nightly_target'') | float(0)
+        }}'
+    target:
+      entity_id: climate.thermostat
+  - action: climate.set_temperature
+    metadata: {}
+    data:
+      temperature: '{{ states(''input_number.heating_nightly_target'') | float(0)
+        }}'
+    target:
+      entity_id: climate.all_radiators
+  mode: single
+- id: '1764081417916'
+  alias: Activate Holiday Mode Scheduled
+  triggers:
+  - at: 00:00:00
+    trigger: time
+  conditions:
+  - condition: template
+    value_template: '{% set start = states(''input_datetime.holiday_start'') %} {%
+      set end = states(''input_datetime.holiday_end'') %} {% set today = now().date()
+      | string %} {{ start <= today <= end }}
+
+      '
+  - condition: state
+    entity_id: input_boolean.holiday_mode
+    state: 'off'
+  actions:
+  - target:
+      entity_id: input_boolean.holiday_mode
+    action: input_boolean.turn_on
+  mode: single
+- id: '1764081525964'
+  alias: Deactivate Holiday Mode Scheduled
+  description: ''
+  triggers:
+  - at: 00:00:00
+    trigger: time
+  conditions:
+  - condition: template
+    value_template: '{% set end = states(''input_datetime.holiday_end'') %} {% set
+      today = now().date() | string %} {{ today > end }}
+
+      '
+  - condition: state
+    entity_id: input_boolean.holiday_mode
+    state: 'on'
+  actions:
+  - target:
+      entity_id: input_boolean.holiday_mode
+    action: input_boolean.turn_off
+  mode: single
+- id: '1764081647578'
+  alias: Holiday Mode Actions
+  description: ''
+  triggers:
+  - entity_id: input_boolean.holiday_mode
+    to: 'on'
+    trigger: state
+  actions:
+  - action: input_button.press
+    metadata: {}
+    data: {}
+    target:
+      entity_id: input_button.night_mode
+  - action: input_number.set_value
+    metadata: {}
+    data:
+      value: 15
+    target:
+      entity_id: input_number.heating_nightly_target
+  - action: input_number.set_value
+    metadata: {}
+    data:
+      value: 15
+    target:
+      entity_id: input_number.heating_daily_target
+  - data:
+      message: Holiday Mode activated
+    action: notify.family
+  mode: single
+- id: '1764081881457'
+  alias: Holiday Mode Deactivation Actions
+  description: ''
+  triggers:
+  - entity_id: input_boolean.holiday_mode
+    to: 'off'
+    trigger: state
+  actions:
+  - data:
+      message: Holiday Mode deactivated
+    action: notify.family
+  mode: single
+- id: '1764164286312'
+  alias: Bedroom Scott door
+  description: ''
+  triggers:
+  - trigger: state
+    entity_id:
+    - binary_sensor.door_bedroom_scott_alarm_1
+    from:
+    - 'off'
+    to:
+    - 'on'
+  conditions:
+  - condition: and
+    conditions:
+    - condition: state
+      entity_id: input_boolean.bedroom_scott_door_alarm
+      state: 'off'
+    - condition: state
+      entity_id: input_boolean.bedroom_scott_alarm_mute
+      state: 'off'
+    - condition: template
+      value_template: "{% set uptime = states('sensor.uptime') %} {% if uptime not
+        in ['unknown', 'unavailable', 'none'] %}\n  {{ (as_timestamp(now()) - as_timestamp(uptime))
+        > 90 }}\n{% else %}\n  false\n{% endif %}\n"
+      alias: Check home assistant uptime for false positives
+  actions:
+  - target:
+      entity_id:
+      - input_boolean.bedroom_scott_door_alarm
+    action: input_boolean.turn_on
+  - target:
+      entity_id: script.bedroom_scott_notify_wait
+    action: script.turn_on
+  mode: single
+- id: '1764164717491'
+  alias: Cancel Bedroom Scott delay (button)
+  description: ''
+  triggers:
+  - entity_id: input_boolean.reset_bedroom_scott_delay
+    to: 'on'
+    trigger: state
+  actions:
+  - target:
+      entity_id: script.bedroom_scott_notify_wait
+    action: script.turn_off
+  - target:
+      entity_id:
+      - input_boolean.bedroom_scott_door_alarm
+    action: input_boolean.turn_off
+  - target:
+      entity_id:
+      - input_boolean.reset_bedroom_scott_delay
+    action: input_boolean.turn_off
+  mode: single
+- id: '1765316424158'
+  alias: Front garden trash light malfunctioning
+  description: ''
+  triggers:
+  - trigger: numeric_state
+    entity_id:
+    - sensor.front_garden_trash_power
+    for:
+      hours: 0
+      minutes: 5
+      seconds: 0
+    below: 4
+  conditions:
+  - condition: state
+    entity_id: light.front_garden_trash
+    state:
+    - 'on'
+  actions:
+  - data:
+      filename: /config/www/snapshots/front_garden_trash_snapshot1.png
+    action: camera.snapshot
+    target:
+      entity_id: camera.front_door_fluent
+    enabled: false
+  - action: notify.steven
+    metadata: {}
+    data:
+      title: Front garden trash light
+      message: 'Malfunctioning '
+      data:
+        image: https://ha.madebysteven.nl/local/snapshots/front_garden_trash_snapshot1.png?v={{
+          (state_attr('automation.front_garden_trash_light_malfunctioning', 'last_triggered')
+          | as_datetime).timestamp() | int }}
+    enabled: false
+  - delay:
+      hours: 0
+      minutes: 1
+      seconds: 0
+      milliseconds: 0
+    enabled: false
+  - action: light.turn_off
+    metadata: {}
+    target:
+      entity_id: light.front_garden_trash
+    data: {}
+  - delay:
+      hours: 0
+      minutes: 5
+      seconds: 0
+      milliseconds: 0
+  - action: light.turn_on
+    metadata: {}
+    target:
+      entity_id: light.front_garden_trash
+    data: {}
+  mode: single
+- id: '1765911204394'
+  alias: Turn on Scott ambient light and turn off Naut
+  description: ''
+  triggers:
+  - domain: mqtt
+    device_id: 864162471f24479c7021c9bfe7eb945f
+    type: action
+    subtype: double
+    trigger: device
+  conditions: []
+  actions:
+  - if:
+    - condition: state
+      entity_id: light.bedroom_scott_ambient
+      state: 'on'
+    then:
+    - action: light.turn_off
+      metadata: {}
+      data: {}
+      target:
+        entity_id: light.bedroom_scott_ambient
+    - delay:
+        hours: 0
+        minutes: 0
+        seconds: 0
+        milliseconds: 500
+    - action: light.turn_on
+      metadata: {}
+      data: {}
+      target:
+        entity_id: light.bedroom_scott_ambient
+    else:
+    - action: light.turn_on
+      metadata: {}
+      data: {}
+      target:
+        entity_id: light.bedroom_scott_ambient
+  mode: single
+- id: '1766516923907'
+  alias: Send Daily Todo Notifications
+  triggers:
+  - at: 08:00:00
+    trigger: time
+  conditions: []
+  actions:
+  - repeat:
+      for_each: '{{ state_attr(''todo.recurring_tasks'', ''items'') | selectattr(''due'',
+        ''defined'') | selectattr(''due'', ''eq'', now().date() | string) | map(attribute=''summary'')
+        | list }}'
+      sequence:
+      - data:
+          todo_item: '{{ repeat.item }}'
+        action: script.send_todo_notification
+  mode: single
+- id: '1766519373020'
+  alias: Complete Todo - Anyone
+  description: ''
+  triggers:
+  - event_type: mobile_app_notification_action
+    event_data:
+      action: COMPLETE_TODO
+    trigger: event
+  conditions: []
+  actions:
+  - variables:
+      completed_by: "{% if trigger.event.data.source_device_id == device_id('Steven')
+        %}\n  Steven\n{% elif trigger.event.data.source_device_id == device_id('Anja')
+        %}\n  Anja\n{% else %}\n  Unknown\n{% endif %}\n"
+  - target:
+      entity_id: todo.recurring_tasks
+    data:
+      item: '{{ trigger.event.data.data.todo_item }}'
+      status: completed
+    action: todo.update_item
+  - target:
+      entity_id: input_text.recurring_tasks_last_completed_by
+    data:
+      value: '{{ completed_by }} completed ''{{ trigger.event.data.data.todo_item
+        }}'' at {{ now().strftime(''%H:%M'') }}'
+    action: input_text.set_value
+  - data:
+      message: '✓ {{ completed_by }} completed: {{ trigger.event.data.data.todo_item
+        }}'
+    action: notify.steven
+  - data:
+      message: '✓ {{ completed_by }} completed: {{ trigger.event.data.data.todo_item
+        }}'
+    action: notify.anja
+  mode: parallel
+- id: '1766519422161'
+  alias: Recreate Recurring Todo
+  description: ''
+  triggers:
+  - entity_id: todo.recurring_tasks
+    attribute: items
+    trigger: state
+  conditions: []
+  actions:
+  - repeat:
+      for_each: '{{ state_attr(''todo.recurring_tasks'', ''items'') | selectattr(''status'',
+        ''eq'', ''completed'') | list }}'
+      sequence:
+      - condition: template
+        value_template: '{{ ''[daily]'' in repeat.item.summary or ''[weekly]'' in
+          repeat.item.summary }}'
+      - target:
+          entity_id: todo.recurring_tasks
+        data:
+          item: '{{ repeat.item.summary }}'
+          due_date: "{% if '[daily]' in repeat.item.summary %}\n  {{ (now() + timedelta(days=1)).date()
+            }}\n{% elif '[weekly]' in repeat.item.summary %}\n  {{ (now() + timedelta(days=7)).date()
+            }}\n{% endif %}\n"
+        action: todo.add_item
+      - target:
+          entity_id: todo.recurring_tasks
+        data:
+          item: '{{ repeat.item.summary }}'
+        action: todo.remove_item
+  mode: single
+- id: '1766520220237'
+  alias: Send Todo Notifications on Due Date
+  description: ''
+  triggers:
+  - entity_id: todo.recurring_tasks
+    trigger: state
+  conditions: []
+  actions:
+  - delay:
+      seconds: 2
+  - data:
+      title: "\U0001F4CB Todo Reminder"
+      message: Check your todo list - something is due today!
+      data:
+        actions:
+        - action: OPEN_TODO_LIST
+          title: Open List
+    action: notify.steven
+  - data:
+      title: "\U0001F4CB Todo Reminder"
+      message: Check your todo list - something is due today!
+      data:
+        actions:
+        - action: OPEN_TODO_LIST
+          title: Open List
+    action: notify.anja
+  mode: single
+- id: '1766780410868'
+  alias: Scott ambient light on
+  description: ''
+  triggers:
+  - trigger: time
+    at: input_datetime.scott_ambient_light_start_time
+    enabled: true
+  conditions: []
+  actions:
+  - action: light.turn_on
+    metadata: {}
+    data: {}
+    target:
+      entity_id: light.bedroom_scott_ambient
+  mode: single
+- id: '1767101880249'
+  alias: Bathroom - Maintain minimum temperature
+  description: Keep bathroom above minimum temperature. Skips when heater is in towel
+    (dry) mode.
+  triggers:
+  - entity_id: sensor.bathroom_temperature
+    trigger: state
+  conditions:
+  - condition: numeric_state
+    entity_id: sensor.bathroom_temperature
+    below: 18
+  - condition: not
+    conditions:
+    - condition: state
+      entity_id: climate.bathroom_heater
+      state: dry
+  actions:
+  - target:
+      entity_id: climate.bathroom_heater
+    data:
+      hvac_mode: heat
+    action: climate.set_hvac_mode
+  - target:
+      entity_id: climate.bathroom_heater
+    data:
+      temperature: 20
+    action: climate.set_temperature
+  mode: single
+- id: '1767101937681'
+  alias: Bathroom - Morning smart preheat
+  description: Preheat bathroom before morning routine. Starts earlier when outdoor
+    temperature is lower. Skips when heater is in towel (dry) mode.
+  triggers:
+  - at: 06:00:00
+    trigger: time
+  conditions:
+  - condition: numeric_state
+    entity_id: sensor.outdoor_temperature_temperature
+    below: 18
+  - condition: not
+    conditions:
+    - condition: state
+      entity_id: climate.bathroom_heater
+      state: dry
+  actions:
+  - choose:
+    - conditions:
+      - condition: numeric_state
+        entity_id: sensor.outdoor_temperature_temperature
+        below: 0
+      sequence:
+      - delay:
+          hours: 0
+          minutes: 30
+          seconds: 0
+          milliseconds: 0
+    - conditions:
+      - condition: numeric_state
+        entity_id: sensor.outdoor_temperature_temperature
+        below: 5
+      sequence:
+      - delay:
+          hours: 0
+          minutes: 45
+          seconds: 0
+          milliseconds: 0
+    - conditions:
+      - condition: numeric_state
+        entity_id: sensor.outdoor_temperature_temperature
+        below: 10
+      sequence:
+      - delay:
+          hours: 1
+          minutes: 0
+          seconds: 0
+          milliseconds: 0
+    default:
+    - delay:
+        hours: 1
+        minutes: 30
+        seconds: 0
+        milliseconds: 0
+  - target:
+      entity_id: climate.bathroom_heater
+    data:
+      hvac_mode: heat
+    action: climate.set_hvac_mode
+  - target:
+      entity_id: climate.bathroom_heater
+    data:
+      temperature: 20
+    action: climate.set_temperature
+  mode: single
+- id: '1767101985959'
+  alias: Bathroom - Evening smart preheat
+  description: Preheat bathroom before evening routine. Starts earlier when outdoor
+    temperature is lower. Skips when heater is in towel (dry) mode.
+  triggers:
+  - at: '17:00:00'
+    trigger: time
+  conditions:
+  - condition: numeric_state
+    entity_id: sensor.outdoor_temperature_temperature
+    below: 18
+  - condition: not
+    conditions:
+    - condition: state
+      entity_id: climate.bathroom_heater
+      state: dry
+  actions:
+  - choose:
+    - conditions:
+      - condition: numeric_state
+        entity_id: sensor.outdoor_temperature_temperature
+        below: 0
+      sequence:
+      - delay:
+          hours: 0
+          minutes: 30
+          seconds: 0
+          milliseconds: 0
+    - conditions:
+      - condition: numeric_state
+        entity_id: sensor.outdoor_temperature_temperature
+        below: 5
+      sequence:
+      - delay:
+          hours: 0
+          minutes: 45
+          seconds: 0
+          milliseconds: 0
+    - conditions:
+      - condition: numeric_state
+        entity_id: sensor.outdoor_temperature_temperature
+        below: 10
+      sequence:
+      - delay:
+          hours: 1
+          minutes: 0
+          seconds: 0
+          milliseconds: 0
+    default:
+    - delay:
+        hours: 1
+        minutes: 30
+        seconds: 0
+        milliseconds: 0
+  - target:
+      entity_id: climate.bathroom_heater
+    data:
+      hvac_mode: heat
+    action: climate.set_hvac_mode
+  - target:
+      entity_id: climate.bathroom_heater
+    data:
+      temperature: 20
+    action: climate.set_temperature
+  mode: single
+- id: '1767102005347'
+  alias: Bathroom - Return to eco temperature
+  description: Lower bathroom temperature when comfort schedule ends. Skips when heater
+    is in towel (dry) mode.
+  triggers:
+  - entity_id: schedule.bathroom_comfort_times
+    to: 'off'
+    trigger: state
+  conditions:
+  - condition: not
+    conditions:
+    - condition: state
+      entity_id: climate.bathroom_heater
+      state: dry
+  actions:
+  - target:
+      entity_id: climate.bathroom_heater
+    data:
+      hvac_mode: heat
+    action: climate.set_hvac_mode
+  - target:
+      entity_id: climate.bathroom_heater
+    data:
+      temperature: 17
+    action: climate.set_temperature
+  mode: single
+- id: '1768139850126'
+  alias: Pause living room music when Chromecast is playing
+  description: Pause music in the living room when Chromecast HD starts playback
+  triggers:
+  - entity_id: media_player.woonkamer
+    to: playing
+    trigger: state
+  conditions:
+  - condition: state
+    entity_id: media_player.living_room
+    state: playing
+  actions:
+  - target:
+      entity_id: media_player.living_room
+    action: media_player.media_pause
+  mode: single
+- id: '1739440800001'
+  alias: 'Freddy: Daily morning clean'
+  description: Clean Kitchen, Living Room, and Dining Room daily at scheduled time
   trigger:
-  - platform: time_pattern
-    seconds: /30
+  - platform: time
+    at: input_datetime.freddy_morning_clean
   condition: []
   action:
-  - service: pyscript.made_by_steven_api
-    data: {}
   - if:
-    - condition: template
-      value_template: '{{ states(''sensor.made_by_steven_api'') != ''ok'' }}'
+    - condition: state
+      entity_id: input_boolean.skip_freddy_kitchen_living_dining
+      state: 'on'
     then:
-    - service: notify.steven
-      data:
-        title: MadeBySteven API
-        message: unhealthy
+    - action: input_boolean.turn_off
+      target:
+        entity_id: input_boolean.skip_freddy_kitchen_living_dining
+    else:
+    - action: script.freddy_clean_kitchen_living_dining
   mode: single
+- id: '1739440800002'
+  alias: 'Freddy: Daily hallway clean'
+  description: Clean the Hallway daily at scheduled time
+  trigger:
+  - platform: time
+    at: input_datetime.freddy_hallway_clean
+  condition: []
+  action:
+  - if:
+    - condition: state
+      entity_id: input_boolean.skip_freddy_hallway
+      state: 'on'
+    then:
+    - action: input_boolean.turn_off
+      target:
+        entity_id: input_boolean.skip_freddy_hallway
+    else:
+    - action: script.freddy_clean_hallway
+  mode: single
+- id: tv_distance_pause_resume
+  alias: TV Distance - Pause/Resume Woonkamer
+  description: Pause media when too close to TV, resume when moved back
+  triggers:
+  - trigger: state
+    entity_id: binary_sensor.tv_distance_sensor_too_close_to_tv
+    to: 'on'
+    id: too_close
+  - trigger: state
+    entity_id: binary_sensor.tv_distance_sensor_too_close_to_tv
+    to: 'off'
+    id: far_enough
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: too_close
+      sequence:
+      - action: media_player.media_pause
+        target:
+          entity_id: media_player.woonkamer
+    - conditions:
+      - condition: trigger
+        id: far_enough
+      sequence:
+      - action: media_player.media_play
+        target:
+          entity_id: media_player.woonkamer
+  mode: single
+- id: '1740000000001'
+  alias: Bedroom wall switch - ceiling fan light
+  description: Physical wall switch (Shelly detached) toggles ceiling fan IR light
+  triggers:
+  - trigger: state
+    entity_id:
+    - binary_sensor.shellyplus1pm_bedroom_input_0_input
+    from:
+    - 'on'
+    - 'off'
+    to:
+    - 'on'
+    - 'off'
+  conditions: []
+  actions:
+  - action: switch.toggle
+    target:
+      entity_id: switch.ceiling_fan_light
+  mode: single
+- id: '1774621464192'
+  alias: Bedroom Scott wall switch - ceiling fan light
+  description: Physical wall switch (Shelly detached) toggles ceiling fan IR light
+  triggers:
+  - trigger: state
+    entity_id:
+    - binary_sensor.wall_switch_input_0
+    from:
+    - 'on'
+    - 'off'
+    to:
+    - 'on'
+    - 'off'
+  conditions: []
+  actions:
+  - action: switch.toggle
+    target:
+      entity_id: switch.ceiling_fan_scott_light
+    data: {}
+  mode: single
+- id: '1775201319284'
+  alias: Car arrived at Rob and Marga
+  description: ''
+  triggers:
+  - trigger: zone
+    entity_id: device_tracker.ford_fiesta
+    zone: zone.parents_anja
+    event: enter
+  conditions: []
+  actions:
+  - action: notify.steven
+    data:
+      message: at Rob and Marga
+      title: Car arrived
+  mode: single
+
+- id: dwmp_package_status_notification
+  alias: "DWMP: Package status update"
+  description: "Notify when a package status changes"
+  triggers:
+  - trigger: event
+    event_type: dwmp_package_status_changed
+  conditions: []
+  actions:
+  - action: notify.steven
+    data:
+      title: "📦 Package Update"
+      message: "{{ trigger.event.data.carrier | upper }}: {{ trigger.event.data.tracking_number }} → {{ trigger.event.data.new_status | replace(\"_\", \" \") }}{% if trigger.event.data.label %} ({{ trigger.event.data.label }}){% endif %}"
+  mode: queued
+  max: 10

@@ -1,0 +1,128 @@
+substitutions:
+  name: esphome-web-26d8c4
+  friendly_name: ESPHome EInk
+
+esphome:
+  name: ${name}
+  friendly_name: ${friendly_name}
+  min_version: 2024.6.0
+  name_add_mac_suffix: false
+  project:
+    name: esphome.web
+    version: dev
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+
+# Allow Over-The-Air updates
+ota:
+- platform: esphome
+
+wifi:
+  ssid: !secret home_wifi_ssid
+  password: !secret home_wifi_password
+
+font:
+  - file: 'fonts/Roboto-Bold.ttf'
+    id: font_roboto_bold
+    size: 36
+  - file: 'fonts/Roboto-Medium.ttf'
+    id: font_roboto_medium
+    size: 12
+
+time:
+  - platform: homeassistant
+    id: esptime
+
+text_sensor:
+  - platform: homeassistant
+    id: living_room_back_temperature
+    entity_id: sensor.living_room_back_temperature
+    internal: true
+    on_value:
+      then:
+        - logger.log:
+            format: "Received: %s"
+            args: ['id(living_room_back_temperature).state']
+  - platform: homeassistant
+    id: living_room_back_humidity
+    entity_id: sensor.living_room_back_humidity
+    internal: true
+    on_value:
+      then:
+        - logger.log:
+            format: "Received: %s"
+            args: ['id(living_room_back_humidity).state']
+  - platform: homeassistant
+    id: bedroom_marlou_temperature
+    entity_id: sensor.bedroom_marlou_temperature
+    internal: true
+    on_value:
+      then:
+        - logger.log:
+            format: "Received: %s"
+            args: ['id(bedroom_marlou_temperature).state']
+  - platform: homeassistant
+    id: bedroom_marlou_humidity
+    entity_id: sensor.bedroom_marlou_humidity
+    internal: true
+    on_value:
+      then:
+        - logger.log:
+            format: "Received: %s"
+            args: ['id(bedroom_marlou_humidity).state']
+
+spi:
+  clk_pin: 18
+  mosi_pin: 23
+
+display:
+  - platform: waveshare_epaper
+    id: my_display
+    cs_pin: 13
+    dc_pin: 22
+    busy_pin:
+      number: 14
+      inverted: true
+    reset_pin: 21
+    model: 7.50inV2
+    reset_duration: 2ms
+    update_interval: 30min
+    pages:
+      - id: page1
+        lambda: |-
+          it.strftime(0, 60, id(font_roboto_bold), TextAlign::BASELINE_LEFT, "%H:%M", id(esptime).now());
+
+          it.printf(127, 23, id(font_roboto_medium), TextAlign::TOP_RIGHT , "Living room back temperature: %f°", id(living_room_back_temperature).state.c_str());
+          if (id(living_room_back_temperature).has_state()) {
+            it.printf(127, 23, id(font_roboto_medium), TextAlign::TOP_RIGHT , "Living room back temperature: %f°", id(living_room_back_temperature).state.c_str());
+          }
+
+          if (id(living_room_back_humidity).has_state()) {
+            it.printf(127, 23, id(font_roboto_medium), TextAlign::TOP_RIGHT , "Living room back humidity: %f%%", id(living_room_back_humidity).state.c_str());
+          }
+
+          if (id(office_temperature).has_state()) {
+            it.printf(127, 60, id(font_roboto_medium), TextAlign::BASELINE_RIGHT , "Office temperature: %f°", id(office_temperature).state.c_str());
+          }
+
+          if (id(office_humidity).has_state()) {
+            it.printf(127, 60, id(font_roboto_medium), TextAlign::BASELINE_RIGHT , "Office humidity: %f%%", id(office_humidity).state.c_str());
+          }
+      # - id: page2
+      #   lambda: |-
+      #     it.print(0, 10, id(font_roboto_medium), "This is page 2!");
+
+interval:
+  - interval: 5min
+    then:
+      - display.page.show_next: my_display
+      - component.update: my_display

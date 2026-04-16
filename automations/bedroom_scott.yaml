@@ -1,0 +1,31 @@
+- id: bedroom_scott_ambient_on_turn_off_closet
+  alias: Bedroom Scott - turn off closet when ambient turns on
+  triggers:
+  - trigger: state
+    entity_id: light.bedroom_scott_ambient
+    to: 'on'
+  conditions:
+  - condition: state
+    entity_id: light.closet_scott
+    state: 'on'
+  actions:
+  - action: light.turn_off
+    target:
+      entity_id: light.closet_scott
+  mode: single
+
+- id: bedroom_scott_closet_on_turn_off_ambient
+  alias: Bedroom Scott - turn off ambient when closet turns on
+  triggers:
+  - trigger: state
+    entity_id: light.closet_scott
+    to: 'on'
+  conditions:
+  - condition: state
+    entity_id: light.bedroom_scott_ambient
+    state: 'on'
+  actions:
+  - action: light.turn_off
+    target:
+      entity_id: light.bedroom_scott_ambient
+  mode: single

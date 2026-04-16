@@ -1,0 +1,133 @@
+# =============================================================================
+# Template Sensors — Miscellaneous
+# =============================================================================
+
+- binary_sensor:
+    # Ceiling fan states combining ESP switch state + Shelly power measurement
+    # ESP knows what was commanded, Shelly confirms power draw
+    # Measured thresholds:
+    #   ~1W = standby (all off)
+    #   ~6.7W = light only
+    #   ~7.0W = fan only
+    #   ~9.6W = both on
+
+    - name: "Ceiling Fan Light (Power)"
+      unique_id: ceiling_fan_light_power
+      device_class: light
+      state: >
+        {% set power = states('sensor.shellyplus1pm_bedroom_switch_0_power') | float(0) %}
+        {% set switch_on = is_state('switch.ceiling_fan_light', 'on') %}
+        {{ switch_on and power > 5 }}
+
+    - name: "Ceiling Fan Running (Power)"
+      unique_id: ceiling_fan_running_power
+      device_class: running
+      state: >
+        {% set power = states('sensor.shellyplus1pm_bedroom_switch_0_power') | float(0) %}
+        {% set switch_on = is_state('switch.ceiling_fan_fan', 'on') %}
+        {{ switch_on and power > 5 }}
+
+    - name: "Ceiling Fan Active (Power)"
+      unique_id: ceiling_fan_active_power
+      device_class: power
+      state: >
+        {{ states('sensor.shellyplus1pm_bedroom_switch_0_power') | float(0) > 5 }}
+
+- light:
+    # Template light using power measurement for state, IR switch for control
+    - name: "Ceiling Fan Light (Template)"
+      unique_id: ceiling_fan_light_template
+      state: >
+        {% set power = states('sensor.shellyplus1pm_bedroom_switch_0_power') | float(0) %}
+        {% set switch_on = is_state('switch.ceiling_fan_light', 'on') %}
+        {{ switch_on and power > 5 }}
+      turn_on:
+        - action: switch.turn_on
+          target:
+            entity_id: switch.ceiling_fan_light
+      turn_off:
+        - action: switch.turn_off
+          target:
+            entity_id: switch.ceiling_fan_light
+
+- fan:
+    # Template fan using power measurement for state, IR switch for control
+    - name: "Ceiling Fan (Template)"
+      unique_id: ceiling_fan_fan_template
+      state: >
+        {% set power = states('sensor.shellyplus1pm_bedroom_switch_0_power') | float(0) %}
+        {% set switch_on = is_state('switch.ceiling_fan_fan', 'on') %}
+        {{ switch_on and power > 5 }}
+      turn_on:
+        - action: switch.turn_on
+          target:
+            entity_id: switch.ceiling_fan_fan
+      turn_off:
+        - action: switch.turn_off
+          target:
+            entity_id: switch.ceiling_fan_fan
+
+- sensor:
+    # Converts Ford Fiesta speed from knots to km/h
+    - name: "Ford Fiesta Speed in km/h"
+      unit_of_measurement: "km/h"
+      state: >
+        {% set speed = states('sensor.ford_fiesta_speed_in_km_h') %}
+        {% if speed not in ['unknown', 'unavailable', '', None] %}
+          {{ (speed | float * 1.852) | round(2) }}
+        {% else %}
+          None
+        {% endif %}
+
+# =============================================================================
+# Inknook — last-known-value wrappers for deep-sleep ESPHome sensors
+# Keeps the last non-unavailable state instead of showing unknown.
+# =============================================================================
+
+- sensor:
+    - name: Inknook Daily Quote
+      unique_id: inknook_daily_quote_last_known
+      availability: "true"
+      state: >
+        {% set v = states('sensor.inknook_dashboard_daily_quote') %}
+        {% if v not in ['unknown', 'unavailable', ''] %}{{ v }}{% else %}{{ this.state }}{% endif %}
+
+    - name: Inknook Battery Voltage
+      unique_id: inknook_battery_voltage_last_known
+      unit_of_measurement: V
+      device_class: voltage
+      state_class: measurement
+      availability: "true"
+      state: >
+        {% set v = states('sensor.inknook_dashboard_battery_voltage') %}
+        {% if v not in ['unknown', 'unavailable', ''] %}{{ v }}{% else %}{{ this.state }}{% endif %}
+
+    - name: Inknook BME280 Temperature
+      unique_id: inknook_bme280_temperature_last_known
+      unit_of_measurement: °C
+      device_class: temperature
+      state_class: measurement
+      availability: "true"
+      state: >
+        {% set v = states('sensor.inknook_dashboard_bme280_temperature') %}
+        {% if v not in ['unknown', 'unavailable', ''] %}{{ v }}{% else %}{{ this.state }}{% endif %}
+
+    - name: Inknook BME280 Humidity
+      unique_id: inknook_bme280_humidity_last_known
+      unit_of_measurement: "%"
+      device_class: humidity
+      state_class: measurement
+      availability: "true"
+      state: >
+        {% set v = states('sensor.inknook_dashboard_bme280_humidity') %}
+        {% if v not in ['unknown', 'unavailable', ''] %}{{ v }}{% else %}{{ this.state }}{% endif %}
+
+    - name: Inknook WiFi Signal
+      unique_id: inknook_wifi_signal_last_known
+      unit_of_measurement: dBm
+      device_class: signal_strength
+      state_class: measurement
+      availability: "true"
+      state: >
+        {% set v = states('sensor.inknook_dashboard_wifi_signal') %}
+        {% if v not in ['unknown', 'unavailable', ''] %}{{ v }}{% else %}{{ this.state }}{% endif %}

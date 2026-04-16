@@ -1,0 +1,48 @@
+- id: postgres_disk_usage_warning
+  alias: "Waarschuwing: PostgreSQL schijf bijna vol"
+  description: >-
+    Stuurt een melding wanneer de PostgreSQL container schijf boven de 80% komt.
+    Dit voorkomt dat de database crasht door een volle schijf.
+  trigger:
+    - trigger: numeric_state
+      entity_id: sensor.postgres_container_disk_usage
+      above: 80
+  condition:
+    - condition: template
+      value_template: >-
+        {{ (as_timestamp(now()) - as_timestamp(state_attr("automation.waarschuwing_postgresql_schijf_bijna_vol", "last_triggered") or 0)) > 86400 }}
+  action:
+    - action: notify.steven
+      data:
+        title: "⚠️ PostgreSQL schijf bijna vol"
+        message: >-
+          De PostgreSQL container schijf is {{ states("sensor.postgres_container_disk_usage") }}% vol.
+          Ruim schijfruimte op of vergroot de container om een database crash te voorkomen.
+  mode: single
+
+- id: postgres_disk_usage_critical
+  alias: "Kritiek: PostgreSQL schijf vol"
+  description: >-
+    Stuurt een dringende melding wanneer de PostgreSQL container schijf boven de 90% komt.
+  trigger:
+    - trigger: numeric_state
+      entity_id: sensor.postgres_container_disk_usage
+      above: 90
+  condition:
+    - condition: template
+      value_template: >-
+        {{ (as_timestamp(now()) - as_timestamp(state_attr("automation.kritiek_postgresql_schijf_vol", "last_triggered") or 0)) > 21600 }}
+  action:
+    - action: notify.steven
+      data:
+        title: "🚨 PostgreSQL schijf kritiek vol"
+        message: >-
+          De PostgreSQL container schijf is {{ states("sensor.postgres_container_disk_usage") }}% vol!
+          Database crash dreigt. Onderneem direct actie.
+        data:
+          push:
+            sound:
+              name: default
+              critical: 1
+              volume: 1.0
+  mode: single

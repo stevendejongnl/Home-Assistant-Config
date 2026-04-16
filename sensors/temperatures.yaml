@@ -1,0 +1,33 @@
+# =============================================================================
+# Average Temperature Sensors
+# Computed averages across room temperature sensors (uses the "average" platform).
+# =============================================================================
+
+- platform: average
+  unique_id: 56db1246-4c22-446b-9cb8-e0a9009b970a
+  name: "Average house temperature"
+  entities:
+    - sensor.honeywell_thermostat_indoor_temperature
+    - sensor.living_room_back_temperature
+    - sensor.kitchen_temperature
+    - sensor.dining_room_temperature
+    - sensor.bedroom_temperature
+    - sensor.bedroom_scott_temperature
+    - sensor.bedroom_marlou_temperature
+
+- platform: average
+  unique_id: b26d4c44-3fae-4776-92e5-d305d442507e
+  name: "Average downstairs temperature"
+  entities:
+    - sensor.honeywell_thermostat_indoor_temperature
+    - sensor.living_room_back_temperature
+    - sensor.kitchen_temperature
+    - sensor.dining_room_temperature
+
+- platform: average
+  unique_id: 1fc6f146-1dd3-4623-b5bf-e71f4a244f1d
+  name: "Average upstairs temperature"
+  entities:
+    - sensor.bedroom_temperature
+    - sensor.bedroom_scott_temperature
+    - sensor.bedroom_marlou_temperature

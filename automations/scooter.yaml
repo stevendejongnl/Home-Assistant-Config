@@ -1,0 +1,23 @@
+- alias: Turn off scooter charger
+  id: '1739184000001'
+  description: Turns off the scooter charger when power drops below 50W for 5 minutes
+  triggers:
+  - trigger: numeric_state
+    entity_id: sensor.scooter_charger_power
+    below: 50
+    for:
+      hours: 0
+      minutes: 5
+      seconds: 0
+  conditions:
+  - condition: template
+    value_template: "{{ (as_timestamp(now()) - as_timestamp(states('sensor.uptime'))) > 1200 }}"
+  actions:
+  - action: switch.turn_off
+    target:
+      entity_id: switch.scooter_charger
+  - action: notify.steven
+    data:
+      title: Scooter charger
+      message: Power below 50W for more than 5 minutes, switched off
+  mode: single

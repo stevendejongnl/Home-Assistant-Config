@@ -1,0 +1,51 @@
+substitutions:
+  name: attic-air-quality
+  friendly_name: Attic Air Quality
+
+esphome:
+  name: ${name}
+  name_add_mac_suffix: false
+  friendly_name: ${friendly_name}
+  min_version: 2025.5.0
+
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+
+api:
+
+logger:
+
+ota:
+  - platform: esphome
+    password: !secret ota_password
+
+improv_serial:
+
+captive_portal:
+
+esp32_improv:
+  authorizer: none
+
+web_server:
+
+i2c:
+  sda: 21
+  scl: 22
+  scan: True
+
+sensor:
+  - platform: scd30
+    co2:
+      name: "CO2"
+    temperature:
+      name: "Temperature"
+    humidity:
+      name: "Humidity"
+    address: 0x61
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  use_address: 192.168.1.76

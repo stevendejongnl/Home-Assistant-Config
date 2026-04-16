@@ -1,0 +1,38 @@
+- alias: "Sync garden path lights on availability"
+  description: >
+    When either garden path light comes back from unavailable, sync it to
+    match the other one's state. Handles the case where a Shelly reconnects
+    after a dropped connection.
+  triggers:
+    - trigger: state
+      entity_id: light.front_garden_path_light_second
+      from: unavailable
+    - trigger: state
+      entity_id: light.front_garden_path_light_street_side
+      from: unavailable
+  actions:
+    - variables:
+        came_back: "{{ trigger.entity_id }}"
+        other: >-
+          {% if trigger.entity_id == 'light.front_garden_path_light_second' %}
+            light.front_garden_path_light_street_side
+          {% else %}
+            light.front_garden_path_light_second
+          {% endif %}
+    - choose:
+        - conditions:
+            - condition: template
+              value_template: "{{ is_state(other | trim, 'on') }}"
+          sequence:
+            - action: light.turn_on
+              target:
+                entity_id: "{{ came_back }}"
+        - conditions:
+            - condition: template
+              value_template: "{{ is_state(other | trim, 'off') }}"
+          sequence:
+            - action: light.turn_off
+              target:
+                entity_id: "{{ came_back }}"
+  mode: parallel
+  max: 2

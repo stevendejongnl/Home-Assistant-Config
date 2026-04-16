@@ -1,0 +1,13 @@
+- id: "turn_off_chromecast_when_tv_switch_off"
+  alias: Turn off Chromecast when TV switch is turned off
+  description: "Stops the Chromecast when the TV switch is turned off to prevent it from continuing to play"
+  trigger:
+    - trigger: state
+      entity_id: switch.living_room_television
+      to: "off"
+  condition: []
+  action:
+    - action: media_player.turn_off
+      target:
+        entity_id: media_player.woonkamer
+  mode: single

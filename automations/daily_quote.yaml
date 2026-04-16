@@ -1,0 +1,13 @@
+- id: "daily_quote_family_notification"
+  alias: Daily quote family notification
+  description: "Send the daily quote to family at 08:00"
+  trigger:
+    - trigger: time
+      at: "08:00:00"
+  condition: []
+  action:
+    - action: notify.family
+      data:
+        title: Quote of the day
+        message: "{{ states('sensor.inknook_dashboard_daily_quote') }}"
+  mode: single

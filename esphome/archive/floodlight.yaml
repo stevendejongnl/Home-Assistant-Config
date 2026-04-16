@@ -1,0 +1,32 @@
+esphome:
+  name: floodlight
+  friendly_name: Floodlight
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: "+XFkSs0jff8KFNT+I7QpeXj+3WPuOil11oN+QmTIT1I="
+
+ota:
+  - platform: esphome
+    password: "052c4e04a8663d2bad71f843d1ef5edb"
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Floodlight Fallback Hotspot"
+    password: "DiEcz0cLpLMu"
+
+captive_portal:
+    

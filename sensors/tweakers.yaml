@@ -1,0 +1,38 @@
+# =============================================================================
+# Tweakers Pricewatch Sensors
+# Fetches current lowest prices from Tweakers.net pricewatch via REST API.
+# Reference: https://github.com/tychobrouwer/tweakers-pricewatch
+# =============================================================================
+
+# TP-Link TL-SG108 — 8-port Gigabit network switch
+- platform: rest
+  unique_id: tweakers_tp_link_tl_sg108_switch_price_data
+  name: Tweakers TP-Link TL-SG108 switch price data
+  resource: https://tweakers.net/ajax/price_chart/327758/nl/
+  method: GET
+  scan_interval: 3600
+  value_template: "{{ value_json.dataset.source[-1][1] }}"
+  json_attributes:
+    - dataset
+
+# TP-Link Deco X50 (1-pack) — Wi-Fi 6 mesh router
+- platform: rest
+  unique_id: tweakers_tp_link_deco_x50_1_pack_price_data
+  name: Tweakers TP-Link Deco X50 (1-pack) price data
+  resource: https://tweakers.net/ajax/price_chart/1786790/nl/
+  method: GET
+  value_template: "{{ value_json.dataset.source[-1][1] }}"
+  scan_interval: 3600
+  json_attributes:
+    - dataset
+
+# Karcher SC 3 EasyFix — steam cleaner
+- platform: rest
+  unique_id: tweakers_karcher_sc_3_easyfix_price_data
+  name: Tweakers Kärcher SC 3 EasyFix price data
+  resource: https://tweakers.net/ajax/price_chart/2260628/nl/
+  method: GET
+  value_template: "{{ value_json.dataset.source[-1][1] }}"
+  scan_interval: 3600
+  json_attributes:
+    - dataset

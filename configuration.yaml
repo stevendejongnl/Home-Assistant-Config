@@ -1,53 +1,142 @@
+# =============================================================================
+# Core Settings
+# Fundamental HA configuration: default integrations, customizations, networking, logging
+# =============================================================================
+
+default_config:
+
+homeassistant:
+  customize: !include customize.yaml
+  allowlist_external_dirs:
+    - /config/www/snapshots
+    - /config/openhasp/
+
 http:
   use_x_forwarded_for: true
   trusted_proxies: !secret http_trusted_proxies
 
-my:
-mobile_app:
-energy:
-
-lovelace:
-  mode: yaml
-
-homeassistant:
-  whitelist_external_dirs:
-    - /config
-  customize:
-    device_tracker.ford_fiesta:
-      entity_picture: /local/ford-fiesta.jpg
-
-pyscript: !include pyscript/config.yaml
-
-recorder:
-  purge_keep_days: 3
-  exclude:
-    entities:
-      - sensor.icloud3_event_log
-
 logger:
   default: info
   logs:
-    custom_components.pyscript: debug
+    custom_components.openhasp: debug
+    custom_components.robovac.vacuum: debug
+    custom_components.robovac.tuyalocalapi: debug
+    custom_components.robovac_mqtt: debug
+    custom_components.tuya_local: debug
 
-input_boolean: !include input_boolean.yaml
-input_datetime: !include input_datetime.yaml
-input_select: !include input_select.yaml
+# =============================================================================
+# Integrations
+# External services and scripting engines
+# =============================================================================
+
+# InfluxDB v2 — long-term metrics storage (connection configured via UI)
+influxdb:
+  tags:
+    source: HA
+  tags_attributes:
+    - friendly_name
+  default_measurement: units
+
+# PyScript — Python scripting engine for advanced automations
+pyscript:
+  allow_all_imports: true
+  hass_is_global: true
+
+# =============================================================================
+# UI & Frontend
+# Themes, custom panels, and OpenHASP touch-screen plates
+# =============================================================================
+
 frontend:
   themes: !include_dir_merge_named themes
-group: !include groups.yaml
-notify: !include notify.yaml
+openhasp: !include_dir_merge_named openhasp_configs/
+panel_custom: !include panel_custom.yaml
+
+# =============================================================================
+# Automation & Scripts
+# Automations, scripts, shell commands, templates, and sensors
+# =============================================================================
+
 automation old: !include automations.yaml
 automation: !include_dir_merge_list automations/
 script: !include scripts.yaml
-scene: !include scenes.yaml
 sensor: !include_dir_merge_list sensors/
-template: !include_dir_merge_list template_sensors/
-calendar: !include calendar.yaml
-utility_meter: !include utility_meter.yaml
-mqtt: !include_dir_merge_list mqtt/
-homekit: !include homekit.yaml
+shell_command: !include shell_command.yaml
+template: !include_dir_merge_list templates/
 
-telegram_bot:
-  - platform: polling
-    api_key: !secret telegram_scream_bot
-    allowed_chat_ids: !secret telegram_scream_bot_chat_id_steven
+# =============================================================================
+# Input Helpers
+# UI-configurable state holders used by automations and dashboards
+# =============================================================================
+
+input_boolean: !include input_boolean.yaml
+input_button: !include input_button.yaml
+input_datetime: !include input_datetime.yaml
+input_number: !include input_number.yaml
+
+# =============================================================================
+# SmartThings API
+# Token reader + REST commands for direct SmartThings API access.
+# The access_token is read from HA's own OAuth storage (auto-refreshed by HA).
+# Note: samsungce.timeSync is not exposed on this oven; time sync uses the
+# OCF execute capability — verify path with Samsung support if it fails.
+# =============================================================================
+
+command_line:
+  - sensor:
+      name: smartthings_access_token
+      unique_id: smartthings_access_token
+      command: >
+        python3 -c "import json; d=json.load(open('/config/.storage/core.config_entries'));
+        entries=d['data']['entries'];
+        t=[e['data']['token']['access_token'] for e in entries if e.get('domain')=='smartthings'];
+        print(t[0] if t else '')"
+      scan_interval: 3600
+
+rest_command:
+  oven_sync_time:
+    url: "https://api.smartthings.com/v1/devices/d7182718-47a4-ae9b-4187-9d64f021ecd3/commands"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ states('sensor.smartthings_access_token') }}"
+      Content-Type: "application/json"
+    payload: >-
+      {"commands": [{"component": "main", "capability": "execute", "command": "execute",
+      "arguments": ["/x.com.samsung.da.operatetimesync/0",
+      {"x.com.samsung.da.operatetimesync": {"x.com.samsung.da.time":
+      "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"}}]}]}
+
+# =============================================================================
+# Devices & Services
+# Climate control, Apple HomeKit bridge, and notifications
+# =============================================================================
+
+climate: !include climate.yaml
+homekit: !include homekit.yaml
+notify: !include notify.yaml
+
+# =============================================================================
+# Recorder
+# PostgreSQL for short-term state history (long-term in InfluxDB)
+# =============================================================================
+
+recorder:
+  db_url: !secret ha_db_url
+  purge_keep_days: 30
+  exclude:
+    domains:
+      - weather
+      - media_player
+      - update
+
+# =============================================================================
+# Temperature Comparison
+# Year-over-year indoor vs outdoor temperature analysis using InfluxDB
+# =============================================================================
+
+temperature_comparison:
+  inside_temperature_entity: sensor.average_house_temperature
+  outside_temperature_entity: sensor.honeywell_thermostat_outdoor_temperature
+  history_days: 365
+  weight_outdoor_correction: 0.5
+  update_interval: 1800

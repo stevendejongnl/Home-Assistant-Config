@@ -1,0 +1,263 @@
+# =============================================================================
+# Template Sensors — Appliance Scheduling (NordPool)
+#
+# Each sensor finds the cheapest contiguous block of hourly NordPool slots for
+# a given appliance.  The algorithm works as follows:
+#
+#   1. Retrieve today's and tomorrow's hourly price data from the NordPool
+#      sensor (raw_today / raw_tomorrow attributes).
+#   2. Filter out hours that have already passed.
+#   3. Slide a window of size "slots_needed" (from the corresponding
+#      input_number helper) across the remaining hours.
+#   4. For each window position, compute the average energy price.
+#   5. Sort windows by average price (ascending) so the cheapest window is first.
+#   6. Expose the sorted list as a JSON attribute ("slots") with separate
+#      "today" and "tomorrow" arrays.
+#
+# Automations / dashboards can then read the first element of
+# sensor.<name>.attributes.slots.today to get the optimal start time.
+# =============================================================================
+
+- sensor:
+    # --- Washing machine ---
+    - name: "Best Time Slots Washing Machine"
+      unique_id: best_time_slots_washing_machine
+      state: "{{ states('sensor.nordpool_kwh_nl_eur_3_10_021') }}"
+      attributes:
+        slots: >
+          {% set slots_needed = (states('input_number.slots_needed_washing_machine') | float * 4) | int %}
+          {% set slots_needed = slots_needed if slots_needed > 0 else 1 %}
+          {% set raw_today = state_attr('sensor.nordpool_kwh_nl_eur_3_10_021', 'raw_today') %}
+          {% set raw_tomorrow = state_attr('sensor.nordpool_kwh_nl_eur_3_10_021', 'raw_tomorrow') %}
+          {% set now = now() %}
+
+          {% set combined_raw = namespace(today=[], tomorrow=[]) %}
+          {% if raw_today %}
+            {% set today_filtered = raw_today | selectattr('start', '>=', now | as_datetime) | list %}
+            {% set combined_raw.today = today_filtered %}
+          {% endif %}
+          {% if raw_tomorrow %}
+            {% set tomorrow_filtered = raw_tomorrow | selectattr('start', '>=', now | as_datetime) | list %}
+            {% set combined_raw.tomorrow = tomorrow_filtered %}
+          {% endif %}
+
+          {% set slotted = namespace(today=[], tomorrow=[]) %}
+          {% for i in range(0, combined_raw.today | length - slots_needed + 1) %}
+            {% set window = combined_raw.today[i:i+slots_needed] %}
+            {% set avg_price = (window | map(attribute='value') | sum) / slots_needed %}
+            {% set start_time = window[0].start.strftime('%Y-%m-%dT%H:%M:%S%z') %}
+            {% set end_time = window[slots_needed - 1].end.strftime('%Y-%m-%dT%H:%M:%S%z') %}
+            {% set slotted.today = slotted.today + [{'start': start_time, 'end': end_time, 'average': avg_price}] %}
+          {% endfor %}
+          {% for i in range(0, combined_raw.tomorrow | length - slots_needed + 1) %}
+            {% set window = combined_raw.tomorrow[i:i+slots_needed] %}
+            {% set avg_price = (window | map(attribute='value') | sum) / slots_needed %}
+            {% set start_time = window[0].start.strftime('%Y-%m-%dT%H:%M:%S%z') %}
+            {% set end_time = window[slots_needed - 1].end.strftime('%Y-%m-%dT%H:%M:%S%z') %}
+            {% set slotted.tomorrow = slotted.tomorrow + [{'start': start_time, 'end': end_time, 'average': avg_price}] %}
+          {% endfor %}
+
+          {% set combined = {
+            "today": slotted.today | sort(attribute='average'),
+            "tomorrow": slotted.tomorrow | sort(attribute='average')
+          } %}
+
+          {{ combined | tojson }}
+
+    # --- Dryer ---
+    - name: "Best Time Slots Dryer"
+      unique_id: best_time_slots_dryer
+      state: "available"
+      attributes:
+        slots: >
+          {% set slots_needed = (states('input_number.slots_needed_dryer') | float * 4) | int %}
+          {% set slots_needed = slots_needed if slots_needed > 0 else 1 %}
+          {% set raw_today = state_attr('sensor.nordpool_kwh_nl_eur_3_10_021', 'raw_today') %}
+          {% set raw_tomorrow = state_attr('sensor.nordpool_kwh_nl_eur_3_10_021', 'raw_tomorrow') %}
+          {% set now = now() %}
+
+          {% set combined_raw = namespace(today=[], tomorrow=[]) %}
+          {% if raw_today %}
+            {% set today_filtered = raw_today | selectattr('start', '>=', now | as_datetime) | list %}
+            {% set combined_raw.today = today_filtered %}
+          {% endif %}
+          {% if raw_tomorrow %}
+            {% set tomorrow_filtered = raw_tomorrow | selectattr('start', '>=', now | as_datetime) | list %}
+            {% set combined_raw.tomorrow = tomorrow_filtered %}
+          {% endif %}
+
+          {% set slotted = namespace(today=[], tomorrow=[]) %}
+          {% for i in range(0, combined_raw.today | length - slots_needed + 1) %}
+            {% set window = combined_raw.today[i:i+slots_needed] %}
+            {% set avg_price = (window | map(attribute='value') | sum) / slots_needed %}
+            {% set start_time = window[0].start.strftime('%Y-%m-%dT%H:%M:%S%z') %}
+            {% set end_time = window[slots_needed - 1].end.strftime('%Y-%m-%dT%H:%M:%S%z') %}
+            {% set slotted.today = slotted.today + [{'start': start_time, 'end': end_time, 'average': avg_price}] %}
+          {% endfor %}
+          {% for i in range(0, combined_raw.tomorrow | length - slots_needed + 1) %}
+            {% set window = combined_raw.tomorrow[i:i+slots_needed] %}
+            {% set avg_price = (window | map(attribute='value') | sum) / slots_needed %}
+            {% set start_time = window[0].start.strftime('%Y-%m-%dT%H:%M:%S%z') %}
+            {% set end_time = window[slots_needed - 1].end.strftime('%Y-%m-%dT%H:%M:%S%z') %}
+            {% set slotted.tomorrow = slotted.tomorrow + [{'start': start_time, 'end': end_time, 'average': avg_price}] %}
+          {% endfor %}
+
+          {% set combined = {
+            "today": slotted.today | sort(attribute='average'),
+            "tomorrow": slotted.tomorrow | sort(attribute='average')
+          } %}
+
+          {{ combined | tojson }}
+
+    # --- Dishwasher ---
+    - name: "Best Time Slots Dishwasher"
+      unique_id: best_time_slots_dishwasher
+      state: "available"
+      attributes:
+        slots: >
+          {% set slots_needed = (states('input_number.slots_needed_dishwasher') | float * 4) | int %}
+          {% set slots_needed = slots_needed if slots_needed > 0 else 1 %}
+          {% set raw_today = state_attr('sensor.nordpool_kwh_nl_eur_3_10_021', 'raw_today') %}
+          {% set raw_tomorrow = state_attr('sensor.nordpool_kwh_nl_eur_3_10_021', 'raw_tomorrow') %}
+          {% set now = now() %}
+
+          {% set combined_raw = namespace(today=[], tomorrow=[]) %}
+          {% if raw_today %}
+            {% set today_filtered = raw_today | selectattr('start', '>=', now | as_datetime) | list %}
+            {% set combined_raw.today = today_filtered %}
+          {% endif %}
+          {% if raw_tomorrow %}
+            {% set tomorrow_filtered = raw_tomorrow | selectattr('start', '>=', now | as_datetime) | list %}
+            {% set combined_raw.tomorrow = tomorrow_filtered %}
+          {% endif %}
+
+          {% set slotted = namespace(today=[], tomorrow=[]) %}
+          {% for i in range(0, combined_raw.today | length - slots_needed + 1) %}
+            {% set window = combined_raw.today[i:i+slots_needed] %}
+            {% set avg_price = (window | map(attribute='value') | sum) / slots_needed %}
+            {% set start_time = window[0].start.strftime('%Y-%m-%dT%H:%M:%S%z') %}
+            {% set end_time = window[slots_needed - 1].end.strftime('%Y-%m-%dT%H:%M:%S%z') %}
+            {% set slotted.today = slotted.today + [{'start': start_time, 'end': end_time, 'average': avg_price}] %}
+          {% endfor %}
+          {% for i in range(0, combined_raw.tomorrow | length - slots_needed + 1) %}
+            {% set window = combined_raw.tomorrow[i:i+slots_needed] %}
+            {% set avg_price = (window | map(attribute='value') | sum) / slots_needed %}
+            {% set start_time = window[0].start.strftime('%Y-%m-%dT%H:%M:%S%z') %}
+            {% set end_time = window[slots_needed - 1].end.strftime('%Y-%m-%dT%H:%M:%S%z') %}
+            {% set slotted.tomorrow = slotted.tomorrow + [{'start': start_time, 'end': end_time, 'average': avg_price}] %}
+          {% endfor %}
+
+          {% set combined = {
+            "today": slotted.today | sort(attribute='average'),
+            "tomorrow": slotted.tomorrow | sort(attribute='average')
+          } %}
+
+          {{ combined | tojson }}
+
+    # --- Washing machine top 3 (non-overlapping, within 12h) ---
+    - name: "Washing Machine Top 3 Times Text"
+      unique_id: washing_machine_top_3_times_text
+      state: >
+        {% set slots = state_attr('sensor.best_time_slots_washing_machine', 'slots') %}
+        {% set needed_hours = states('input_number.slots_needed_washing_machine') | float %}
+        {% set now_dt = now() %}
+        {% set cutoff_ts = as_timestamp(now_dt) + 12 * 3600 %}
+        {% set today_slots = slots['today'] if slots and slots['today'] else [] %}
+        {% set tomorrow_slots = slots['tomorrow'] if slots and slots['tomorrow'] else [] %}
+        {% set all_slots = (today_slots + tomorrow_slots) | sort(attribute='average') %}
+        {% set ns = namespace(parts=[], selected=[]) %}
+        {% for slot in all_slots %}
+          {% if ns.parts | length < 3 %}
+            {% set start_ts = as_timestamp(slot['start'] | as_datetime) %}
+            {% set end_ts = as_timestamp(slot['end'] | as_datetime) %}
+            {% if start_ts <= cutoff_ts %}
+              {% set ov = namespace(found=false) %}
+              {% for sel in ns.selected %}
+                {% if start_ts < sel[1] and end_ts > sel[0] %}{% set ov.found = true %}{% endif %}
+              {% endfor %}
+              {% if not ov.found %}
+                {% set start = slot['start'] | as_datetime | as_local %}
+                {% set end = slot['end'] | as_datetime | as_local %}
+                {% set cost = (slot['average'] * needed_hours) | round(2) %}
+                {% set hours_until = ((end_ts - as_timestamp(now_dt)) / 3600) | round(0, 'ceil') | int %}
+                {% set countdown = '(nu klaar)' if hours_until <= 0 else '(klaar in ' ~ hours_until ~ 'u)' %}
+                {% set entry = start.strftime('%a') ~ ' ' ~ start.strftime('%H:%M') ~ '-' ~ end.strftime('%H:%M') ~ ' €' ~ ('%.2f' % cost) ~ ' ' ~ countdown %}
+                {% set ns.parts = ns.parts + [entry] %}
+                {% set ns.selected = ns.selected + [[start_ts, end_ts]] %}
+              {% endif %}
+            {% endif %}
+          {% endif %}
+        {% endfor %}
+        {{ ns.parts | join(', ') if ns.parts else 'No slots available' }}
+
+    # --- Dryer top 3 (non-overlapping, within 12h) ---
+    - name: "Dryer Top 3 Times Text"
+      unique_id: dryer_top_3_times_text
+      state: >
+        {% set slots = state_attr('sensor.best_time_slots_dryer', 'slots') %}
+        {% set needed_hours = states('input_number.slots_needed_dryer') | float %}
+        {% set now_dt = now() %}
+        {% set cutoff_ts = as_timestamp(now_dt) + 12 * 3600 %}
+        {% set today_slots = slots['today'] if slots and slots['today'] else [] %}
+        {% set tomorrow_slots = slots['tomorrow'] if slots and slots['tomorrow'] else [] %}
+        {% set all_slots = (today_slots + tomorrow_slots) | sort(attribute='average') %}
+        {% set ns = namespace(parts=[], selected=[]) %}
+        {% for slot in all_slots %}
+          {% if ns.parts | length < 3 %}
+            {% set start_ts = as_timestamp(slot['start'] | as_datetime) %}
+            {% set end_ts = as_timestamp(slot['end'] | as_datetime) %}
+            {% if start_ts <= cutoff_ts %}
+              {% set ov = namespace(found=false) %}
+              {% for sel in ns.selected %}
+                {% if start_ts < sel[1] and end_ts > sel[0] %}{% set ov.found = true %}{% endif %}
+              {% endfor %}
+              {% if not ov.found %}
+                {% set start = slot['start'] | as_datetime | as_local %}
+                {% set end = slot['end'] | as_datetime | as_local %}
+                {% set cost = (slot['average'] * needed_hours) | round(2) %}
+                {% set hours_until = ((end_ts - as_timestamp(now_dt)) / 3600) | round(0, 'ceil') | int %}
+                {% set countdown = '(nu klaar)' if hours_until <= 0 else '(klaar in ' ~ hours_until ~ 'u)' %}
+                {% set entry = start.strftime('%a') ~ ' ' ~ start.strftime('%H:%M') ~ '-' ~ end.strftime('%H:%M') ~ ' €' ~ ('%.2f' % cost) ~ ' ' ~ countdown %}
+                {% set ns.parts = ns.parts + [entry] %}
+                {% set ns.selected = ns.selected + [[start_ts, end_ts]] %}
+              {% endif %}
+            {% endif %}
+          {% endif %}
+        {% endfor %}
+        {{ ns.parts | join(', ') if ns.parts else 'No slots available' }}
+
+    # --- Dishwasher top 3 (non-overlapping, within 12h) ---
+    - name: "Dishwasher Top 3 Times Text"
+      unique_id: dishwasher_top_3_times_text
+      state: >
+        {% set slots = state_attr('sensor.best_time_slots_dishwasher', 'slots') %}
+        {% set needed_hours = states('input_number.slots_needed_dishwasher') | float %}
+        {% set now_dt = now() %}
+        {% set cutoff_ts = as_timestamp(now_dt) + 12 * 3600 %}
+        {% set today_slots = slots['today'] if slots and slots['today'] else [] %}
+        {% set tomorrow_slots = slots['tomorrow'] if slots and slots['tomorrow'] else [] %}
+        {% set all_slots = (today_slots + tomorrow_slots) | sort(attribute='average') %}
+        {% set ns = namespace(parts=[], selected=[]) %}
+        {% for slot in all_slots %}
+          {% if ns.parts | length < 3 %}
+            {% set start_ts = as_timestamp(slot['start'] | as_datetime) %}
+            {% set end_ts = as_timestamp(slot['end'] | as_datetime) %}
+            {% if start_ts <= cutoff_ts %}
+              {% set ov = namespace(found=false) %}
+              {% for sel in ns.selected %}
+                {% if start_ts < sel[1] and end_ts > sel[0] %}{% set ov.found = true %}{% endif %}
+              {% endfor %}
+              {% if not ov.found %}
+                {% set start = slot['start'] | as_datetime | as_local %}
+                {% set end = slot['end'] | as_datetime | as_local %}
+                {% set cost = (slot['average'] * needed_hours) | round(2) %}
+                {% set hours_until = ((start_ts - as_timestamp(now_dt)) / 3600) | round(0, 'ceil') | int %}
+                {% set countdown = '(nu)' if hours_until <= 0 else '(start in ' ~ hours_until ~ 'u)' %}
+                {% set entry = start.strftime('%a') ~ ' ' ~ start.strftime('%H:%M') ~ '-' ~ end.strftime('%H:%M') ~ ' €' ~ ('%.2f' % cost) ~ ' ' ~ countdown %}
+                {% set ns.parts = ns.parts + [entry] %}
+                {% set ns.selected = ns.selected + [[start_ts, end_ts]] %}
+              {% endif %}
+            {% endif %}
+          {% endif %}
+        {% endfor %}
+        {{ ns.parts | join(', ') if ns.parts else 'No slots available' }}

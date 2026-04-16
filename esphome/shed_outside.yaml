@@ -1,0 +1,50 @@
+esphome:
+  name: shed-outside
+  friendly_name: Shed Outside
+
+bk72xx:
+  board: lsc-lma35
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+
+ota:
+  - platform: esphome
+    password: !secret ota_password
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  use_address: 192.168.1.135
+
+# Sync time with Home Assistant
+time:
+  - platform: homeassistant
+    id: homeassistant_time
+    
+output:
+  - platform: libretiny_pwm
+    id: output_red
+    pin: P26
+  - platform: libretiny_pwm
+    id: output_green
+    pin: P24
+  - platform: libretiny_pwm
+    id: output_blue
+    pin: P6
+  - platform: libretiny_pwm
+    id: output_cold
+    pin: P7
+    max_power: 0.5
+
+light:
+  - platform: rgbw
+    id: light_rgbw
+    name: Light
+    red: output_red
+    green: output_green
+    blue: output_blue
+    white: output_cold

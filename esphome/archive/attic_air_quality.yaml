@@ -1,0 +1,40 @@
+substitutions:
+  name: attic-air-quality
+  friendly_name: Attic Air Quality
+
+packages:
+  esphome.esp_web_tools_example: github://esphome/example-configs/esp-web-tools/esp32.yaml@main
+
+esphome:
+  name: ${name}
+  name_add_mac_suffix: false
+  friendly_name: ${friendly_name}
+
+api:
+  encryption:
+    key: rsA+AQWSqOEA3HtiMnASeC/yYU/KAeYNxbUZsHV4nfU=
+
+logger:
+
+i2c:
+  sda: 21
+  scl: 22
+  scan: True
+
+sensor:
+  - platform: scd30
+    co2:
+      name: "CO2"
+    temperature:
+      name: "Temperature"
+    humidity:
+      name: "Humidity"
+    address: 0x61
+
+esp32:
+  framework:
+    type: esp-idf
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password

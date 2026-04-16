@@ -1,0 +1,66 @@
+- id: '1742380000001'
+  alias: Toothbrush low battery notification
+  description: Notify Steven and Anja when their Oral-B toothbrush battery is low
+  triggers:
+  - trigger: state
+    entity_id: binary_sensor.toothbrush_steven_battery_is_low
+    to: 'on'
+    id: steven_low
+  - trigger: state
+    entity_id: binary_sensor.toothbrush_anja_battery_is_low
+    to: 'on'
+    id: anja_low
+  - trigger: time
+    at: '09:00:00'
+    id: daily_reminder
+  conditions: []
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: steven_low
+      sequence:
+      - action: notify.steven
+        data:
+          message: >-
+            Tandenborstel bijna leeg
+            {%- set pct = states('sensor.toothbrush_steven_battery') %}
+            {%- if pct not in ['unavailable', 'unknown'] %} ({{ pct }}%){%- endif %}
+    - conditions:
+      - condition: trigger
+        id: anja_low
+      sequence:
+      - action: notify.anja
+        data:
+          message: >-
+            Tandenborstel bijna leeg
+            {%- set pct = states('sensor.toothbrush_anja_battery') %}
+            {%- if pct not in ['unavailable', 'unknown'] %} ({{ pct }}%){%- endif %}
+    - conditions:
+      - condition: trigger
+        id: daily_reminder
+      - condition: state
+        entity_id: binary_sensor.toothbrush_steven_battery_is_low
+        state: 'on'
+      sequence:
+      - action: notify.steven
+        data:
+          message: >-
+            Tandenborstel bijna leeg
+            {%- set pct = states('sensor.toothbrush_steven_battery') %}
+            {%- if pct not in ['unavailable', 'unknown'] %} ({{ pct }}%){%- endif %}
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: daily_reminder
+      - condition: state
+        entity_id: binary_sensor.toothbrush_anja_battery_is_low
+        state: 'on'
+      sequence:
+      - action: notify.anja
+        data:
+          message: >-
+            Tandenborstel bijna leeg
+            {%- set pct = states('sensor.toothbrush_anja_battery') %}
+            {%- if pct not in ['unavailable', 'unknown'] %} ({{ pct }}%){%- endif %}
+  mode: single

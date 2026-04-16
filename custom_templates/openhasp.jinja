@@ -1,0 +1,87 @@
+{%- macro grid() -%}
+    {%- set settingsSensor = 'binary_sensor.display_settings' -%}
+    {%- set dw = (state_attr(settingsSensor, 'display_w') | default(240)) | int -%}
+    {%- set dh = (state_attr(settingsSensor, 'display_h') | default(240)) | int -%}
+    {%- set cols = (state_attr(settingsSensor, 'grid_cols') | default(6)) | int -%}
+    {%- set rows = (state_attr(settingsSensor, 'grid_rows') | default(6)) | int -%}
+    {%- set margin = (state_attr(settingsSensor, 'grid_margin') | default(10)) | int -%}
+    {%- set gutter = (state_attr(settingsSensor, 'grid_gutter') | default(10)) | int -%}
+    {%- set radius = (state_attr(settingsSensor, 'radius') | default(5)) | int -%}
+    {{- 
+        {
+            'w': (dw - (2 * margin) - ((cols-1) * gutter)) / cols, 
+            'h': (dh - (2 * margin) - ((rows-1) * gutter)) / rows,
+            'cols' : cols,
+            'rows' : rows,
+            'margin' : margin,
+            'gutter' : gutter,
+            'display_width' : dw,
+            'display_height' : dh,
+            'radius': radius
+        } | to_json 
+    -}}
+{%- endmacro -%}
+
+{%- macro w(w) -%}
+    {%- set gutter = (grid() | from_json).gutter | default(10) | int -%}
+    {%- set errors = namespace(w=[]) %}
+    {%- if w > (grid() | from_json).cols or w <= -1 -%}
+        {% set errors.w = 'cols must be between 1 and ' + (grid() | from_json).cols | string %}
+    {%- endif -%}
+    {{- errors.w if errors.w | count > 0 else (w * (grid() | from_json).w | int) + ((w-1) * gutter | int) -}}    
+{%- endmacro -%}
+
+{%- macro h(h) -%}
+    {%- set gutter = (grid() | from_json).gutter | default(10) | int -%}
+    {%- set errors = namespace(h=[]) %}
+    {%- if h > (grid() | from_json).rows or h <= -1 -%}
+        {% set errors.h = 'rows must be beetween 1 and ' + (grid() | from_json).rows | string %}
+    {%- endif -%}
+    {{- errors.h if errors.h | count > 0 else (h * (grid() | from_json).h | int) + ((h-1) * gutter | int) -}}    
+{%- endmacro -%}
+
+{%- macro x(x) -%}
+    {%- set x = x-1 | default(1) -%}
+    {%- set margin = (grid() | from_json).margin | default(10) | int -%}
+    {%- set gutter = (grid() | from_json).gutter | default(10) | int -%}
+    {%- set width = w(x) | int -%}
+    {{- (margin if x == 0 else (margin + width + gutter)) if width is number else width -}}
+{%- endmacro -%}
+
+{%- macro y(y) -%}
+    {%- set y = y-1 | default(1) -%}
+    {%- set margin = (grid() | from_json).margin | default(10) | int -%}
+    {%- set gutter = (grid() | from_json).gutter | default(10) | int -%}
+    {%- set height = h(y) | int -%}
+    {{- (margin if y == 0 else (margin + height + gutter)) if height is number else height -}}
+{%- endmacro -%}
+
+{%- macro AdjustColor(hex, brightness) -%}
+    {%- set brightness = brightness|default(0.1) -%}
+    {%- set hex = hex|replace('#', '')|replace('/[^0-9a-f]/gi', '') -%}
+    {%- if hex|length < 6 -%}
+        {%- set hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2] -%}
+    {%- endif -%}
+    {%- set color = namespace(rgb='') -%}
+    {%- set color.rgb = '#' -%}
+    {%- for i in range(0, 6, 2) -%}
+        {%- set c = hex[i:i+2]|int(base=16) -%}
+        {%- set c = (c + (c * brightness))|round|int -%} 
+        {%- set c = 0 if c < 0 else ( 255 if c > 255 else c) -%}
+        {%- set c = "%02x"|format(c) -%}
+        {%- set color.rgb = color.rgb + c -%} 
+    {%- endfor -%}
+    {{- color.rgb -}}
+{%- endmacro -%}
+
+{%- macro color(name) -%}
+    {%- set s = name.split("_") -%}
+    {%- set base = state_attr('binary_sensor.display_settings',  s[0]+'_color') | default('#000000') -%}
+    {%- if s | count > 1 and s[1] == 'light' -%}
+        {{ AdjustColor(base, 0.2) }}
+    {%- elif s | count > 1 and s[1] == 'dark' -%}
+        {{ AdjustColor(base, -0.2) }}
+    {%-else-%}
+        {{ base  -}}
+    {%- endif %}
+{%- endmacro -%}

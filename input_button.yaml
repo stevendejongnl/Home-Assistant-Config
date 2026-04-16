@@ -1,0 +1,35 @@
+# =============================================================================
+# Input Buttons
+# One-shot triggers for automations and dashboards.
+# =============================================================================
+
+# --- Lighting ---
+night_mode:
+  name: Night Mode
+  icon: mdi:weather-night
+turn_on_room_lights:
+  name: Turn On Room Lights
+  icon: mdi:lightbulb-on
+turn_off_room_lights:
+  name: Turn Off Room Lights
+  icon: mdi:lightbulb-off
+turn_on_garden_front_lights:
+  name: Turn On Garden Front Lights
+  icon: mdi:outdoor-lamp
+turn_off_garden_front_lights:
+  name: Turn Off Garden Front Lights
+  icon: mdi:outdoor-lamp
+turn_on_garden_back_lights:
+  name: Turn On Garden Back Lights
+  icon: mdi:outdoor-lamp
+turn_off_garden_back_lights:
+  name: Turn Off Garden Back Lights
+  icon: mdi:outdoor-lamp
+
+# --- System ---
+proxmox_api_status_frigate:
+  name: Proxmox API Call Status Frigate Endpoint
+  icon: mdi:server
+proxmox_api_restart_frigate:
+  name: Proxmox API Call Restart Frigate Endpoint
+  icon: mdi:server

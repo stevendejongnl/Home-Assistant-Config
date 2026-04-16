@@ -1,6 +1,34 @@
 dryer:
+  name: Dryer
+  initial: off
+  icon: mdi:tumble-dryer
+
 washing_machine:
+  name: Washing Machine
+  initial: off
+  icon: mdi:washing-machine
+
 dishwasher:
+  name: Dishwasher
+  initial: off
+  icon: mdi:dishwasher
+
 start_flip_delayed:
   name: Start Your Automation
   initial: off
+  icon: mdi:play-circle-outline
+
+skip_freddy_kitchen_living_dining:
+  name: Skip Freddy kitchen + living + dining
+  initial: off
+  icon: mdi:robot-vacuum-off
+
+skip_freddy_hallway:
+  name: Skip Freddy hallway
+  initial: off
+  icon: mdi:robot-vacuum-off
+
+ford_fiesta_motion_detected:
+  name: Ford Fiesta Motion Detected
+  initial: off
+  icon: mdi:car-brake-alert

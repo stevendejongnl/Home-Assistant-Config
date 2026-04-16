@@ -1,0 +1,90 @@
+# =============================================================================
+# Weather Notifications
+# Morning forecast for the day, evening forecast for the night ahead.
+# Uses weather.openweathermap with daily/hourly forecasts.
+# =============================================================================
+
+- id: "weather_morning_notification"
+  alias: "Weerbericht: ochtend"
+  description: "Stuur het dagelijkse weerbericht om 07:30"
+  trigger:
+    - trigger: time
+      at: "07:30:00"
+  action:
+    - action: weather.get_forecasts
+      target:
+        entity_id: weather.openweathermap
+      data:
+        type: daily
+      response_variable: forecast
+    - action: notify.family
+      data:
+        title: "Weerbericht voor vandaag"
+        message: |
+          {%- set day = forecast['weather.openweathermap']['forecast'][0] -%}
+          {%- set cmap = {
+            'sunny': 'Zonnig ☀️',
+            'partlycloudy': 'Half bewolkt ⛅',
+            'cloudy': 'Bewolkt ☁️',
+            'rainy': 'Regen 🌧️',
+            'pouring': 'Zware regen 🌧️',
+            'snowy': 'Sneeuw 🌨️',
+            'snowy-rainy': 'Sneeuw met regen 🌨️',
+            'windy': 'Winderig 💨',
+            'windy-variant': 'Winderig 💨',
+            'fog': 'Mist 🌫️',
+            'lightning': 'Onweer ⛈️',
+            'lightning-rainy': 'Onweer met regen ⛈️',
+            'clear-night': 'Helder 🌙',
+            'exceptional': 'Extreem weer ⚠️'
+          } -%}
+          {{ cmap.get(day.condition, day.condition | title) }}
+          🌡️ {{ day.temperature | round | int }}° max · {{ day.templow | round | int }}° min
+          🌧️ {{ day.precipitation_probability | round | int }}% kans op neerslag
+          💨 Wind {{ day.wind_speed | round | int }} km/h
+  mode: single
+
+- id: "weather_evening_notification"
+  alias: "Weerbericht: avond"
+  description: "Stuur het nachtweerbericht om 21:00 voor de nacht die komen gaat"
+  trigger:
+    - trigger: time
+      at: "21:00:00"
+  action:
+    - action: weather.get_forecasts
+      target:
+        entity_id: weather.openweathermap
+      data:
+        type: hourly
+      response_variable: forecast
+    - action: notify.family
+      data:
+        title: "Nachtweerbericht"
+        message: |
+          {%- set hours = forecast['weather.openweathermap']['forecast'][:9] -%}
+          {%- set cmap = {
+            'sunny': 'Zonnig ☀️',
+            'partlycloudy': 'Half bewolkt ⛅',
+            'cloudy': 'Bewolkt ☁️',
+            'rainy': 'Regen 🌧️',
+            'pouring': 'Zware regen 🌧️',
+            'snowy': 'Sneeuw 🌨️',
+            'snowy-rainy': 'Sneeuw met regen 🌨️',
+            'windy': 'Winderig 💨',
+            'windy-variant': 'Winderig 💨',
+            'fog': 'Mist 🌫️',
+            'lightning': 'Onweer ⛈️',
+            'lightning-rainy': 'Onweer met regen ⛈️',
+            'clear-night': 'Helder 🌙',
+            'exceptional': 'Extreem weer ⚠️'
+          } -%}
+          {%- set priority = ['exceptional','lightning-rainy','lightning','pouring','rainy','snowy-rainy','snowy','fog','windy-variant','windy','cloudy','partlycloudy','clear-night','sunny'] -%}
+          {%- set seen = hours | map(attribute='condition') | list -%}
+          {%- set worst = namespace(c=seen[0]) -%}
+          {%- for p in priority -%}{%- if p in seen and worst.c not in priority[:loop.index0] -%}{%- set worst.c = p -%}{%- endif -%}{%- endfor -%}
+          {%- set temps = hours | map(attribute='temperature') | list -%}
+          {%- set rain_probs = hours | map(attribute='precipitation_probability') | list -%}
+          {{ cmap.get(worst.c, worst.c | title) }}
+          🌡️ {{ temps | min | round | int }}° – {{ temps | max | round | int }}°C
+          🌧️ {{ rain_probs | max | round | int }}% kans op neerslag
+  mode: single
