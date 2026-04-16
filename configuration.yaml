@@ -29,19 +29,6 @@ logger:
 # External services and scripting engines
 # =============================================================================
 
-# InfluxDB v2 — long-term metrics storage (connection configured via UI)
-influxdb:
-  tags:
-    source: HA
-  tags_attributes:
-    - friendly_name
-  default_measurement: units
-
-# PyScript — Python scripting engine for advanced automations
-pyscript:
-  allow_all_imports: true
-  hass_is_global: true
-
 # =============================================================================
 # UI & Frontend
 # Themes, custom panels, and OpenHASP touch-screen plates
@@ -168,3 +155,4 @@ recorder:
       - weather
       - media_player
       - update
+
