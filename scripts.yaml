@@ -311,6 +311,8 @@ freddy_revalidate_room:
         timeout:
           minutes: 5
         continue_on_timeout: true
+      - delay:
+          minutes: 2
       - action: script.freddy_revalidate_room
         data:
           room_name: '{{ room_name }}'
