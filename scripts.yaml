@@ -304,6 +304,13 @@ freddy_revalidate_room:
           entity_id: input_number.freddy_room_id_{{ room_name }}
         data:
           value: '{{ room_id + 1 if _scanning | default(false) else 0 }}'
+      - action: vacuum.return_to_base
+        target:
+          entity_id: vacuum.freddy
+      - wait_template: '{{ is_state(''vacuum.freddy'', ''docked'') }}'
+        timeout:
+          minutes: 5
+        continue_on_timeout: true
       - action: script.freddy_revalidate_room
         data:
           room_name: '{{ room_name }}'
