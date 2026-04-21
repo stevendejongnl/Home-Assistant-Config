@@ -58,7 +58,10 @@ freddy_room_clean:
       entity_id: vacuum.freddy
       state: cleaning
     then:
-    - action: vacuum.stop
+    - action: vacuum.start
+      target:
+        entity_id: vacuum.freddy
+    - action: vacuum.return_to_base
       target:
         entity_id: vacuum.freddy
     - delay:
@@ -483,7 +486,7 @@ bedroom_scott_notify_wait:
     - data:
         filename: /config/www/snapshots/bedroom_scott_last_person.jpg
       target:
-        entity_id: image.scott02_person
+        entity_id: image.scott01_person
       action: image.snapshot
     - if:
       - condition: state
