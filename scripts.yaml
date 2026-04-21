@@ -292,7 +292,23 @@ freddy_revalidate_room:
     - action: notify.steven
       data:
         title: Freddy Mapped
-        message: '{{ confirmed.label }} = ID {{ room_id }}. Helper updated.'
+        message: "{{ confirmed.label }} = ID {{ room_id }}. {{ 'Still searching for\
+          \ ' + room_label + ', retrying…' if confirmed.key != room_name else\
+          \ 'Helper updated.' }}"
+    - if:
+      - condition: template
+        value_template: '{{ confirmed.key != room_name }}'
+      then:
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.freddy_room_id_{{ room_name }}
+        data:
+          value: '{{ room_id + 1 if _scanning | default(false) else 0 }}'
+      - action: script.freddy_revalidate_room
+        data:
+          room_name: '{{ room_name }}'
+          _scanning: true
+      - stop: 'Mismatch: ID {{ room_id }} = {{ confirmed.label }}, still seeking {{ room_label }}'
     else:
     - action: notify.steven
       data:
