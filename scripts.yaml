@@ -192,22 +192,29 @@ freddy_revalidate_room:
         message: Tried IDs 0–10 for {{ room_label }}, none triggered movement. Reset
           helper manually.
     - stop: Exceeded ID scan range
-  - action: vacuum.send_command
-    target:
-      entity_id: vacuum.freddy
-    data:
-      command: room_clean
-      params:
-        room_ids: '{{ [room_id] }}'
-        count: 1
-  - wait_template: '{{ not is_state(''vacuum.freddy'', ''docked'') and not is_state(''vacuum.freddy'',
-      ''idle'') }}'
-    timeout:
-      seconds: 20
-    continue_on_timeout: true
+  - repeat:
+      while:
+      - condition: not
+        conditions:
+        - condition: state
+          entity_id: vacuum.freddy
+          state: cleaning
+      - condition: template
+        value_template: '{{ repeat.index <= 3 }}'
+      sequence:
+      - action: vacuum.send_command
+        target:
+          entity_id: vacuum.freddy
+        data:
+          command: room_clean
+          params:
+            room_ids: '{{ [room_id] }}'
+            count: 1
+      - delay:
+          seconds: 20
   - if:
     - condition: template
-      value_template: '{{ not wait.completed }}'
+      value_template: '{{ is_state(''vacuum.freddy'', ''docked'') or is_state(''vacuum.freddy'', ''idle'') }}'
     then:
     - action: input_number.set_value
       target:
