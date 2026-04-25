@@ -1,0 +1,78 @@
+- id: watchdog_mutes_cooldowns
+  alias: 'Watchdog: reset stuck mute/cooldown booleans'
+  description: >-
+    Restart-resilient watchdog for nine input_booleans whose reset relies
+    on a bare delay: in another automation. Per-entity `for:` durations are
+    expected max + safety margin; HA persists `for:` timers across restarts
+    via the recorder. The homeassistant: start trigger force-clears all
+    nine on boot in case the recorder lost the timer.
+  triggers:
+    - trigger: state
+      entity_id: input_boolean.front_motion_cooldown
+      to: 'on'
+      for: { minutes: 10 }
+    - trigger: state
+      entity_id: input_boolean.back_motion_cooldown
+      to: 'on'
+      for: { minutes: 10 }
+    - trigger: state
+      entity_id: input_boolean.ford_fiesta_cooldown
+      to: 'on'
+      for: { minutes: 15 }
+    - trigger: state
+      entity_id: input_boolean.shed_motion_cooldown
+      to: 'on'
+      for: { minutes: 20 }
+    - trigger: state
+      entity_id: input_boolean.mailbox_cooldown
+      to: 'on'
+      for: { minutes: 20 }
+    - trigger: state
+      entity_id: input_boolean.shed_door_cooldown
+      to: 'on'
+      for: { minutes: 20 }
+    - trigger: state
+      entity_id: input_boolean.front_motion_mute
+      to: 'on'
+      for: { hours: 12, minutes: 10 }
+    - trigger: state
+      entity_id: input_boolean.back_motion_mute
+      to: 'on'
+      for: { hours: 12, minutes: 10 }
+    - trigger: state
+      entity_id: input_boolean.shed_motion_mute
+      to: 'on'
+      for: { hours: 12, minutes: 10 }
+    - trigger: homeassistant
+      event: start
+      id: ha_start
+  conditions: []
+  actions:
+    - choose:
+        - conditions:
+            - condition: trigger
+              id: ha_start
+          sequence:
+            - action: input_boolean.turn_off
+              target:
+                entity_id:
+                  - input_boolean.front_motion_cooldown
+                  - input_boolean.back_motion_cooldown
+                  - input_boolean.ford_fiesta_cooldown
+                  - input_boolean.shed_motion_cooldown
+                  - input_boolean.mailbox_cooldown
+                  - input_boolean.shed_door_cooldown
+                  - input_boolean.front_motion_mute
+                  - input_boolean.back_motion_mute
+                  - input_boolean.shed_motion_mute
+      default:
+        - action: input_boolean.turn_off
+          target:
+            entity_id: '{{ trigger.entity_id }}'
+        - action: notify.steven
+          data:
+            title: Watchdog
+            message: >-
+              Reset stuck {{ trigger.entity_id }} (was on past expected max).
+  mode: parallel
+  max: 10
