@@ -3,6 +3,16 @@
 # External commands callable from automations and scripts.
 # =============================================================================
 
+# Proxmox API proxy: Frigate LXC (container 117)
+proxmox_api_status_frigate: >
+  curl 'http://192.168.1.248:7452/pve1/container/117/status'
+
+proxmox_api_start_frigate: >
+  curl --request POST 'http://192.168.1.248:7452/pve1/container/117/start'
+
+proxmox_api_stop_frigate: >
+  curl --request POST 'http://192.168.1.248:7452/pve1/container/117/stop'
+
 woonkamer_speakers_restart: >
   curl --request POST 'http://woonkamer-speakers.local/interact/trigger/restart'
 
