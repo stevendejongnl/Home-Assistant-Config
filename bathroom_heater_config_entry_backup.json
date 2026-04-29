@@ -1,0 +1,25 @@
+{
+  "created_at": "2026-04-29T18:17:01.122356+00:00",
+  "data": {
+    "device_id": "bf0535ca084693adc0mxga",
+    "host": "192.168.1.147",
+    "local_key": "4>K$Pc|kZ1ySc&r!",
+    "poll_only": true,
+    "protocol_version": 3.5,
+    "type": "eurom_sani_bathroom_towel_radiator"
+  },
+  "disabled_by": null,
+  "discovery_keys": {},
+  "domain": "tuya_local",
+  "entry_id": "01KQD7ATE2APG497SABDM2NFZP",
+  "minor_version": 15,
+  "modified_at": "2026-04-29T18:17:01.122359+00:00",
+  "options": {},
+  "pref_disable_new_entities": false,
+  "pref_disable_polling": false,
+  "source": "user",
+  "subentries": [],
+  "title": "Bathroom heater",
+  "unique_id": "bf0535ca084693adc0mxga",
+  "version": 13
+}
