@@ -52,6 +52,24 @@ configuration.yaml
 - **PyScript**: Python scripting engine (`pyscript/` submodule from `stevendejongnl/Home-Assistant-PyScripts`). Configured with `allow_all_imports: true` and `hass_is_global: true`.
 - **Notifications**: Groups target mobile apps for Steven and Anja, plus Telegram bot.
 
+## SSH Access Rules
+
+**NEVER SSH directly to a raw LAN IP address.** Always use:
+- Named hosts from `~/.ssh/config`: `ssh home-assistant` (port 24, HAOS SSH addon)
+- Or the `mcp__infrastructure__infra_ssh_exec` MCP tool — handles ProxyJump automatically
+
+Direct IP SSH (`ssh root@192.168.1.25`) fails when VPN is not active.
+
+On HAOS, `ha` CLI is only in PATH for **login shells**. Always prefix with `bash -l -c`:
+```bash
+# Correct — login shell loads the ha PATH
+bash -l -c 'ha core start'
+bash -l -c 'ha core info'
+
+# Wrong — ha not found in non-login shell
+ha core start
+```
+
 ## Validating Configuration
 
 ```bash

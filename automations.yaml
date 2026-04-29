@@ -974,28 +974,29 @@
   alias: Restart Frigate when doorbell or back garden becomes unavailable
   description: ''
   triggers:
-  - trigger: state
-    entity_id:
-    - camera.back_garden_entry
-    - camera.back_garden_house
-    - camera.doorbell
-    to: unavailable
-    for:
-      hours: 0
-      minutes: 5
-      seconds: 0
-  - trigger: state
-    entity_id:
-    - camera.back_garden_entry
-    - camera.back_garden_house
-    - camera.doorbell
-    to: unknown
+  - trigger: template
+    value_template: >-
+      {{ states('camera.doorbell') in ['unavailable', 'unknown']
+         or states('camera.back_garden_house') in ['unavailable', 'unknown']
+         or states('camera.back_garden_entry') in ['unavailable', 'unknown'] }}
     for:
       hours: 0
       minutes: 5
       seconds: 0
   conditions: []
   actions:
+  - action: homeassistant.reload_config_entry
+    data:
+      entry_id: 01JVA2CH8076Z18CWC7JRXA75P
+  - delay:
+      hours: 0
+      minutes: 2
+      seconds: 0
+  - condition: template
+    value_template: >-
+      {{ states('camera.doorbell') in ['unavailable', 'unknown']
+         or states('camera.back_garden_house') in ['unavailable', 'unknown']
+         or states('camera.back_garden_entry') in ['unavailable', 'unknown'] }}
   - action: input_button.press
     metadata: {}
     data: {}
